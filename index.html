@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Sales Input — Mint Green (Batch) — GS Integrated</title>
+  <title>Sales Input -- Mint Green (Batch) -- GS Integrated</title>
   <meta name="color-scheme" content="light">
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
   <style>
@@ -40,17 +40,17 @@
     .col-num{width:48px;min-width:48px;max-width:48px;text-align:center}
     .order-filter{min-width:220px;padding:6px;border-radius:6px;border:1px solid #e6efe7;background:var(--input-bg)}
 
-/* invoice modal & print-friendly layout */
+    /* invoice modal & print-friendly layout */
     #invoiceModal{position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(0,0,0,0.45);display:none;align-items:center;justify-content:center;z-index:9999}
     #invoiceModal .modal{width:95%;max-width:980px;background:#fff;border-radius:8px;padding:12px;max-height:92vh;display:flex;flex-direction:column}
     #invoiceModal .toolbar{display:flex;gap:8px;align-items:center;margin-bottom:8px}
     #invoiceModal .viewer{overflow:auto;border:1px solid #eee;padding:8px;border-radius:6px;background:#fdfdfd;flex:1}
 
-/* A4 sizing for print and PDF - 8 cards (2 columns x 4 rows) */
+    /* A4 sizing for print and PDF - 8 cards (2 columns x 4 rows) */
     .invoice-page{width:210mm;min-height:297mm;box-sizing:border-box;padding:8mm;margin:6mm auto;page-break-after:always}
     .invoice-grid{display:flex;flex-wrap:wrap;gap:6mm;align-content:flex-start;align-items:flex-start}
 
-/* FIXED HEIGHT cards */
+    /* FIXED HEIGHT cards */
     .invoice-card{
       width:calc(50% - 3mm);
       height:calc((297mm - 16mm - (3*6mm))/4);
@@ -105,8 +105,8 @@
   <div class="wrap">
     <header>
       <div>
-        <h1>Ứng dụng nhập liệu bán hàng — Batches</h1>
-        <div class="muted">Batch-based products & orders — Customers global</div>
+        <h1>Ứng dụng nhập liệu bán hàng -- Batches</h1>
+        <div class="muted">Batch-based products & orders -- Customers global</div>
       </div>
 
       <div style="display:flex;gap:8px;align-items:center">
@@ -147,7 +147,7 @@
       <h3 style="margin:0 0 8px 0">2. Nhập đơn hàng</h3>
       <div class="form-row">
         <div style="position:relative;flex:1">
-          <input id="orderCustomer" placeholder="Tên khách (gõ để tìm hoặc nhập mới)">
+          <input id="orderCustomer" placeholder="Tên/địa chỉ/SĐT (gõ để tìm hoặc nhập mới)">
           <div id="custAc" class="ac-list hidden"></div>
         </div>
       </div>
@@ -201,7 +201,7 @@
     <!-- Customers -->
     <section class="card">
       <div style="display:flex;justify-content:space-between;align-items:center">
-        <h3 style="margin:0">4. Danh sách khách (Import/Export) — chung</h3>
+        <h3 style="margin:0">4. Danh sách khách (Import/Export) -- chung</h3>
         <div style="display:flex;gap:8px;align-items:center">
           <button id="toggleCustBtn" class="btn secondary small"><i data-feather="eye-off"></i> Ẩn</button>
         </div>
@@ -249,16 +249,15 @@ document.addEventListener('DOMContentLoaded', ()=>{ if(window.feather) feather.r
 
 /* ============================
    GOOGLE SHEETS CONFIG
-   (đã chèn GS_URL bạn cung cấp)
    ============================ */
 const GS_URL = 'https://script.google.com/macros/s/AKfycbzW8T_CJZymccBBSklCU3yTLN6rP19fPZv6rkpHsePdbaBD3OHkjcH84nR0oCvgMNw/exec';
-const USE_REMOTE = true; // nếu muốn tắt remote set false
+const USE_REMOTE = true;
 
-/* ---------- State / Batches (nguyên gốc) ---------- */
-let products = [];   // in current batch {id,name,in,price}
-let orders = [];     // in current batch [{id,customer,address,phone,items:[{productIndex,name,qty,price}], total, created}]
-let customers = [];  // global customers [{name,address,phone}]
-let batches = [];    // [{id,name,timestamp,products,orders}]
+/* ---------- State ---------- */
+let products = [];
+let orders = [];
+let customers = [];
+let batches = [];
 let currentBatchId = null;
 let editingOrderIndex = -1;
 let currentOrderIndex = -1;
@@ -268,8 +267,9 @@ const $ = id => document.getElementById(id);
 const uid = (p='id') => p + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2,8);
 const todayStr = ()=>{ const d=new Date(); return `${String(d.getDate()).padStart(2,'0')}-${String(d.getMonth()+1).padStart(2,'0')}-${d.getFullYear()}`; };
 function filenameForExport(def){ const user = $('exportName')? $('exportName').value.trim() : ''; return user? user : (def || todayStr()); }
+function escapeHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-/* ---------- Image resize helper (reduce base64 size) ---------- */
+/* ---------- Image helpers ---------- */
 function resizeImageFileToDataURL(file, maxWidth=800, quality=0.7){
   return new Promise((resolve, reject)=>{
     const reader = new FileReader();
@@ -296,7 +296,7 @@ function resizeImageFileToDataURL(file, maxWidth=800, quality=0.7){
   });
 }
 
-/* ---------- Local persistence (original) ---------- */
+/* ---------- Local persistence ---------- */
 function persistAll(){
   try{
     localStorage.setItem('sa_batches', JSON.stringify(batches));
@@ -306,15 +306,22 @@ function persistAll(){
     localStorage.setItem('sa_invoice_qr_s', String(Number($('qrSize') ? $('qrSize').value : 64)));
   }catch(e){ console.warn('Persist failed', e); }
 }
+function loadLocalOriginal(){
+  try{ batches = JSON.parse(localStorage.getItem('sa_batches')||'[]'); }catch(e){ batches=[]; }
+  try{ currentBatchId = localStorage.getItem('sa_current_batch')||''; if(!currentBatchId && batches.length>0) currentBatchId = batches[0].id; }catch(e){ currentBatchId = (batches[0] && batches[0].id) || null; }
+  try{ customers = JSON.parse(localStorage.getItem('sa_customers')||'[]'); }catch(e){ customers=[]; }
+  const bcur = batches.find(bb=>bb.id===currentBatchId);
+  if(bcur) loadBatchToMemory(bcur);
+}
 
-/* ---------- GOOGLE SHEETS client (simple) ---------- */
+/* ---------- Google Sheets client ---------- */
 async function gsHealth(){
   if(!USE_REMOTE) return false;
   try{
     const r = await fetch(GS_URL + '?action=health', {cache:'no-store'});
     if(!r.ok) return false;
-    const j = await r.json();
-    return j && j.ok;
+    const j = await r.json().catch(()=>null);
+    return j && (j.ok === true || j.status === 'ok');
   }catch(e){ return false; }
 }
 
@@ -323,50 +330,100 @@ async function gsLoadAll(){
   try{
     const r = await fetch(GS_URL + '?action=readAll', {cache:'no-store'});
     if(!r.ok) throw new Error('Network read failed');
-    const raw = await r.text();
-    if(!raw) return false;
-    const data = JSON.parse(raw);
-    // support both formats
+    const txt = await r.text();
+    if(!txt) return false;
+    const data = JSON.parse(txt);
+
+    // Chuẩn hóa dữ liệu từ Apps Script
+    let outBatches = [];
+    let outCustomers = [];
+    let outCurrent = null;
+
     if(Array.isArray(data)){
-      batches = data;
-      customers = [];
-      currentBatchId = (batches[0] && batches[0].id) || currentBatchId;
-    } else {
-      batches = data.batches || [];
-      customers = data.customers || [];
-      currentBatchId = data.currentBatchId || currentBatchId || (batches[0] && batches[0].id);
+      outBatches = data;
+    } else if (data && typeof data === 'object'){
+      if(Array.isArray(data.batches)) outBatches = data.batches;
+      if(Array.isArray(data.customers)) outCustomers = data.customers;
+      if(data.currentBatchId) outCurrent = data.currentBatchId;
+      // Trường hợp Apps Script trả {ok:true, data:{...}}
+      if(data.data){
+        const d = data.data;
+        if(Array.isArray(d.batches)) outBatches = d.batches;
+        if(Array.isArray(d.customers)) outCustomers = d.customers;
+        if(d.currentBatchId) outCurrent = d.currentBatchId;
+      }
     }
-    // load current batch to memory
+
+    // Ràng buộc tối thiểu
+    batches = Array.isArray(outBatches) ? outBatches : [];
+    customers = Array.isArray(outCustomers) ? outCustomers : [];
+    currentBatchId = outCurrent || (batches[0] && batches[0].id) || currentBatchId;
+
     const cur = batches.find(b=>b.id === currentBatchId) || batches[0];
     if(cur) { products = JSON.parse(JSON.stringify(cur.products || [])); orders = JSON.parse(JSON.stringify(cur.orders || [])); }
-    console.log('gsLoadAll ok');
+
+    console.log('gsLoadAll ok', {batches: batches.length, customers: customers.length, currentBatchId});
     return true;
-  }catch(err){ console.warn('gsLoadAll failed', err); return false; }
+  }catch(err){
+    console.warn('gsLoadAll failed', err);
+    return false;
+  }
 }
 
 async function gsSaveAll(){
   if(!USE_REMOTE) return false;
   try{
-    const payload = { action:'saveAll', data:{ batches: batches, customers: customers, currentBatchId: currentBatchId, meta:{ savedAt: new Date().toISOString() } } };
+    // Đảm bảo batch hiện tại chứa products/orders đang chỉnh
+    if(currentBatchId){
+      let b = batches.find(bb=>bb.id===currentBatchId);
+      if(!b){
+        b = {id: currentBatchId, name: `Batch ${new Date().toLocaleString()}`, timestamp: new Date().toISOString(), products: [], orders: []};
+        batches.unshift(b);
+      }
+      b.products = JSON.parse(JSON.stringify(products));
+      b.orders = JSON.parse(JSON.stringify(orders));
+      b.timestamp = new Date().toISOString();
+    }
+
+    const payload = {
+      action:'saveAll',
+      data:{
+        batches: batches || [],
+        customers: customers || [],
+        currentBatchId: currentBatchId || '',
+        meta:{ savedAt: new Date().toISOString(), source:'webapp' }
+      }
+    };
+
     const r = await fetch(GS_URL, {
       method:'POST',
       headers:{ 'Content-Type':'application/json' },
       body: JSON.stringify(payload)
     });
     if(!r.ok) throw new Error('Network save failed');
-    const j = await r.json();
-    return j && j.ok;
-  }catch(err){ console.warn('gsSaveAll failed', err); return false; }
+    const txt = await r.text();
+    let j = {};
+    try{ j = JSON.parse(txt); }catch(e){ j = {}; }
+    const ok = j && (j.ok === true || j.status === 'ok');
+    if(!ok) console.warn('GS save response not ok:', j);
+    return ok;
+  }catch(err){
+    console.warn('gsSaveAll failed', err);
+    return false;
+  }
 }
 
-/* ---------- Wrapper: load preferred (GS -> local) ---------- */
+/* ---------- Load preference: GS -> local ---------- */
 async function loadFromPreferred(){
-  if(USE_REMOTE && GS_URL && GS_URL.indexOf('script.google.com')===0){
+  if(USE_REMOTE && GS_URL.includes('script.google.com')){
     const ok = await gsHealth();
     if(ok){
       const ok2 = await gsLoadAll();
       if(ok2){
-        // ensure UI reflect
+        if(!batches || batches.length===0){
+          const b = { id: uid('batch'), name: `Batch ${new Date().toLocaleString()}`, timestamp: new Date().toISOString(), products: [], orders: [] };
+          batches = [b]; currentBatchId = b.id; products = []; orders = [];
+        }
         renderBatchList();
         renderProducts(); renderCustomers(); renderOrders('');
         ensureTwoRows();
@@ -375,14 +432,12 @@ async function loadFromPreferred(){
       }
     }
   }
-  // fallback to local
+  // fallback local
   loadLocalOriginal();
-  // ensure at least one batch
   if(!batches || batches.length===0){
     const b = { id: uid('batch'), name: `Batch ${new Date().toLocaleString()}`, timestamp: new Date().toISOString(), products: [], orders: [] };
-    batches = [b]; currentBatchId = b.id;
+    batches = [b]; currentBatchId = b.id; products = []; orders = [];
   }
-  if(!currentBatchId && batches.length>0) currentBatchId = batches[0].id;
   const bcur = batches.find(bb=>bb.id===currentBatchId);
   if(bcur) loadBatchToMemory(bcur);
   renderBatchList();
@@ -391,10 +446,8 @@ async function loadFromPreferred(){
   feather.replace();
 }
 
-/* ---------- Modify saveLocal to also attempt remote save (keeps original behavior) ---------- */
-/* We keep original implementation but rename to loadLocalOriginal/saveLocalOriginal internally, then expose same name to rest of code */
+/* ---------- Save wrapper ---------- */
 function saveLocalOriginal(){
-  // Save current batch into batches and persist (original behavior)
   if(currentBatchId){
     const b = batches.find(bb => bb.id === currentBatchId);
     if(b){
@@ -405,48 +458,31 @@ function saveLocalOriginal(){
   }
   persistAll();
   try{
-    const btn=$('saveBtn'); if(btn){ btn.innerHTML='<i data-feather=\"check\"></i> Đã lưu'; feather.replace();
-      setTimeout(()=>{ btn.innerHTML='<i data-feather=\"save\"></i> Lưu'; feather.replace(); },900);
+    const btn=$('saveBtn'); if(btn){ btn.innerHTML='<i data-feather="check"></i> Đã lưu'; feather.replace();
+      setTimeout(()=>{ btn.innerHTML='<i data-feather="save"></i> Lưu'; feather.replace(); },900);
     }
   }catch(e){}
 }
-
-/* New saveLocal will call original saveLocal (sync) then attempt gsSaveAll asynchronously */
 function saveLocal(){
-  try{
-    saveLocalOriginal();
-  }catch(e){
-    console.warn('saveLocalOriginal error', e);
-  }
-  // Attempt remote save but do not block UI; log outcome
-  if(USE_REMOTE && GS_URL && GS_URL.indexOf('script.google.com')===0){
-    gsSaveAll().then(ok=>{ if(ok) console.log('Remote save ok'); else console.warn('Remote save failed'); }).catch(err=> console.warn('Remote save exception', err));
+  try{ saveLocalOriginal(); }catch(e){ console.warn('saveLocalOriginal error', e); }
+  if(USE_REMOTE && GS_URL.includes('script.google.com')){
+    gsSaveAll()
+      .then(ok=>{
+        if(ok) console.log('Remote save ok');
+        else console.warn('Remote save failed');
+      })
+      .catch(err=> console.warn('Remote save exception', err));
   }
 }
 
-/* keep original loadLocal function as loadLocalOriginal (used if remote fails) */
-function loadLocalOriginal(){
-  try{ batches = JSON.parse(localStorage.getItem('sa_batches')||'[]'); }catch(e){ batches=[]; }
-  try{ currentBatchId = localStorage.getItem('sa_current_batch')||''; if(!currentBatchId && batches.length>0) currentBatchId = batches[0].id; }catch(e){ currentBatchId = (batches[0] && batches[0].id) || null; }
-  try{ customers = JSON.parse(localStorage.getItem('sa_customers')||'[]'); }catch(e){ customers=[]; }
-  const bcur = batches.find(bb=>bb.id===currentBatchId);
-  if(bcur) loadBatchToMemory(bcur);
-}
-
-/* logo/qr helpers (unchanged) */
-function saveImageToLocal(key, dataUrl){ try{ localStorage.setItem(key, dataUrl); }catch(e){ console.warn('Cannot persist image'); } }
-function loadImageFromLocal(key){ try{ return localStorage.getItem(key)||null; }catch(e){ return null; } }
-function loadInvoiceLogoWidth(){ const v = Number(localStorage.getItem('sa_invoice_logo_w')||0); return (v>0? v: 70); }
-function loadInvoiceQrSize(){ const v = Number(localStorage.getItem('sa_invoice_qr_s')||0); return (v>0? v: 64); }
-
-/* ---------- Batch management (same as original) ---------- */
+/* ---------- Batch management ---------- */
 function createNewBatch(name){
   const id = uid('batch');
   const b = { id, name: name || (`Batch ${new Date().toLocaleString()}`), timestamp: new Date().toISOString(), products: [], orders: [] };
   batches.unshift(b);
   currentBatchId = id;
   loadBatchToMemory(b);
-  saveLocal(); // uses new saveLocal (local + remote)
+  saveLocal();
   renderBatchList();
   renderProducts(); renderOrders(''); 
 }
@@ -457,7 +493,6 @@ function loadBatchToMemory(batch){
 function switchToBatch(id){
   const b = batches.find(bb=>bb.id===id);
   if(!b) return;
-  // save current first
   if(currentBatchId){
     const cur = batches.find(bb=>bb.id===currentBatchId);
     if(cur){
@@ -486,7 +521,6 @@ function importBatchFile(file){
     try{
       const data = JSON.parse(ev.target.result);
       if(!data || !data.id || !data.products || !data.orders){ alert('File batch không hợp lệ'); return; }
-      // ensure unique id
       data.id = uid('batch');
       batches.unshift(data);
       currentBatchId = data.id;
@@ -499,7 +533,7 @@ function importBatchFile(file){
   reader.readAsText(file);
 }
 
-/* ---------- compute sold counts (same) ---------- */
+/* ---------- compute sold & totals ---------- */
 function computeSoldMap(){
   const sold = {};
   orders.forEach(o => o.items.forEach(it => {
@@ -552,7 +586,7 @@ function updateOrdersTotals(applyPrices=false){
   });
 }
 
-/* ---------- Renderers (unchanged) ---------- */
+/* ---------- Renderers ---------- */
 function renderBatchList(){
   const sel = $('batchSelect');
   sel.innerHTML = '';
@@ -690,16 +724,13 @@ function renderCustomers(){
     tr.addEventListener('click', ()=> { $('orderCustomer').value = c.name; $('orderAddress').value = c.address||''; $('orderPhone').value = c.phone||''; });
     tbody.appendChild(tr);
   });
-  // attach delete handlers
   tbody.querySelectorAll('button[data-act="delcust"]').forEach(btn=>{
     btn.addEventListener('click', (ev)=>{ ev.stopPropagation(); const idx = Number(btn.dataset.idx); if(confirm('Xóa khách? (không xóa đơn)')){ customers.splice(idx,1); saveLocal(); renderCustomers(); } });
   });
   feather.replace();
 }
 
-function escapeHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
-/* ---------- products ops (kept original) ---------- */
+/* ---------- products ops ---------- */
 $('addProdBtn').addEventListener('click', ()=>{
   const name = $('pName').value.trim(); const inQty = Number($('pIn').value||0); const price = Number($('pPrice').value||0);
   if(!name){ alert('Nhập tên hàng'); $('pName').focus(); return; }
@@ -708,7 +739,7 @@ $('addProdBtn').addEventListener('click', ()=>{
   saveLocal(); renderProducts(); renderOrderOptions(); renderOrders($('orderFilter').value||'');
 });
 
-/* product-level buttons are delegated */
+/* product-level buttons */
 $('productsTable').addEventListener('click', (e)=>{
   const btn = e.target.closest('button'); if(!btn) return;
   const idx = Number(btn.dataset.idx); const act = btn.dataset.act;
@@ -730,7 +761,7 @@ $('productsTable').addEventListener('click', (e)=>{
       orders.forEach(o=> o.items.forEach(it=> { if((it.name||'').trim().toLowerCase() === oldName.trim().toLowerCase()) it.name = p.name; }));
     }
     if(priceChanged){
-      const apply = confirm('Bạn vừa thay đổi giá. Áp dụng giá mới cho các đơn đã lưu trong batch này? (OK = có, Cancel = giữ giá cũ trong đơn)');
+      const apply = confirm('Bạn vừa thay đổi giá. Áp dụng giá mới cho các đơn đã lưu trong batch này?');
       if(apply){ updateOrdersTotals(true); } else { updateOrdersTotals(false); }
     } else { updateOrdersTotals(false); }
     saveLocal();
@@ -753,7 +784,7 @@ $('productsTable').addEventListener('click', (e)=>{
   }
 });
 
-/* ---------- order items UI (same) ---------- */
+/* ---------- order items UI ---------- */
 function renderOrderOptions(){
   document.querySelectorAll('#orderItemsTable tbody select').forEach(sel=>{
     const val = sel.value;
@@ -802,26 +833,47 @@ function computeOrderTotal(){
   return total;
 }
 
-/* ---------- customer autocomplete & update ---------- */
+/* ---------- customer autocomplete (sửa: tìm cả tên/địa chỉ/SĐT, không bị ẩn khi click) ---------- */
 function updateCustSuggestions(q){
   const acEl = $('custAc');
-  if(!q || q.trim()===''){ acEl.classList.add('hidden'); return; }
+  const inputEl = $('orderCustomer');
+  if(!q || q.trim()===''){ acEl.classList.add('hidden'); acEl.innerHTML=''; return; }
   const s = q.trim().toLowerCase();
-  const matches = customers.filter(c=> (c.name||'').toLowerCase().includes(s)).slice(0,30);
+  const matches = customers
+    .filter(c=>{
+      const hay = `${c.name||''} ${c.address||''} ${c.phone||''}`.toLowerCase();
+      return hay.includes(s);
+    })
+    .slice(0,30);
+
   acEl.innerHTML = '';
-  if(matches.length===0){ acEl.innerHTML = '<div class="ac-item">Không có gợi ý</div>'; acEl.classList.remove('hidden'); return; }
+  if(matches.length===0){
+    acEl.innerHTML = '<div class="ac-item" style="color:var(--muted)">Không có gợi ý</div>';
+    acEl.classList.remove('hidden');
+    return;
+  }
   matches.forEach(c=>{
     const d = document.createElement('div'); d.className='ac-item';
-    d.innerHTML = `<strong>${escapeHtml(c.name)}</strong><div style="font-size:12px;color:var(--muted)">${escapeHtml(c.address||'')} ${c.phone?(' • '+escapeHtml(c.phone)):''}</div>`;
-    d.addEventListener('mousedown', (ev)=>{ ev.preventDefault(); $('orderCustomer').value = c.name; $('orderAddress').value = c.address||''; $('orderPhone').value = c.phone||''; acEl.classList.add('hidden'); computeOrderTotal(); });
+    d.innerHTML = `<strong>${escapeHtml(c.name)}</strong><div style="font-size:12px;color:var(--muted)">${escapeHtml(c.address||'')}${c.phone?(' • '+escapeHtml(c.phone)):''}</div>`;
+    // dùng mousedown để fill trước khi blur
+    d.addEventListener('mousedown', (ev)=>{
+      ev.preventDefault();
+      inputEl.value = c.name;
+      $('orderAddress').value = c.address||'';
+      $('orderPhone').value = c.phone||'';
+      acEl.classList.add('hidden');
+      computeOrderTotal();
+    });
     acEl.appendChild(d);
   });
   acEl.classList.remove('hidden');
 }
 $('orderCustomer').addEventListener('input', (e)=> updateCustSuggestions(e.target.value));
-$('orderCustomer').addEventListener('blur', ()=> setTimeout(()=> $('custAc').classList.add('hidden'), 150));
+// không ẩn ngay lập tức để bắt mousedown chọn item
+$('orderCustomer').addEventListener('blur', ()=> setTimeout(()=> $('custAc').classList.add('hidden'), 200));
+$('orderCustomer').addEventListener('focus', (e)=> updateCustSuggestions(e.target.value));
 
-/* ---------- save order (and add/update customer) ---------- */
+/* ---------- save order ---------- */
 $('saveOrderBtn').addEventListener('click', ()=>{
   const customer = $('orderCustomer').value.trim(); if(!customer){ alert('Tên khách không được để trống'); $('orderCustomer').focus(); return; }
   const address = $('orderAddress').value.trim(); const phone = $('orderPhone').value.trim();
@@ -866,16 +918,16 @@ function loadOrderToForm(i){
 $('prevOrderBtn').addEventListener('click', ()=>{ if(orders.length===0) return; if(currentOrderIndex<=0) currentOrderIndex = orders.length-1; else currentOrderIndex--; loadOrderToForm(currentOrderIndex); });
 $('nextOrderBtn').addEventListener('click', ()=>{ if(orders.length===0) return; currentOrderIndex = (currentOrderIndex+1)%orders.length; loadOrderToForm(currentOrderIndex); });
 
-/* Apply current product prices to all orders (overwrite item.price) */
+/* Apply current product prices to all orders */
 $('applyPricesBtn').addEventListener('click', ()=>{
-  if(!confirm('Áp dụng giá hiện tại của sản phẩm cho tất cả đơn trong batch này? (Hành động này cập nhật item.price trong orders)')) return;
+  if(!confirm('Áp dụng giá hiện tại của sản phẩm cho tất cả đơn trong batch này?')) return;
   updateOrdersTotals(true);
   saveLocal();
   renderOrders($('orderFilter').value||'');
   renderProducts();
 });
 
-/* ---------- import/export customers (same) ---------- */
+/* ---------- import/export customers ---------- */
 $('importCustBtn').addEventListener('click', ()=> $('custFile').click());
 $('custFile').addEventListener('change', (e)=>{
   const f = e.target.files[0]; if(!f) return;
@@ -973,7 +1025,7 @@ $('exportOrdersPdfBtn').addEventListener('click', ()=>{
   html2pdf().from(wrapper).set({margin:10, filename:`${filenameForExport('Danh_sach_don')}.pdf`, html2canvas:{scale:1.2}}).save();
 });
 
-/* ---------- invoices modal functions (unchanged) ---------- */
+/* ---------- invoices modal ---------- */
 function buildInvoicePages(){
   const perPage = 8;
   const pages = [];
@@ -1056,16 +1108,17 @@ function openInvoiceModal(){
 
     if(overflowList.length > 0){
       const cont = document.createElement('div'); cont.className = 'invoice-continues';
-      cont.innerHTML = `<strong>Tiếp theo — Mặt hàng bổ sung (trang ${pageIndex+1})</strong>`;
+      cont.innerHTML = `<strong>Tiếp theo -- Mặt hàng bổ sung (trang ${pageIndex+1})</strong>`;
       overflowList.forEach(entry=>{
         const ord = orders[entry.globalIndex];
         const line = document.createElement('div'); line.className = 'cont-item';
-        line.innerHTML = `<strong>Hóa đơn #${entry.globalIndex+1} — ${escapeHtml(ord.customer)}:</strong> ${entry.items.map(it=>`${escapeHtml(it.name)} x${it.qty}`).join('; ')}`;
+        line.innerHTML = `<strong>Hóa đơn #${entry.globalIndex+1} -- ${escapeHtml(ord.customer)}:</strong> ${entry.items.map(it=>`${escapeHtml(it.name)} x${it.qty}`).join('; ')}`;
         cont.appendChild(line);
       });
       pageDiv.appendChild(cont);
     }
 
+    const viewer = $('invoiceViewer');
     viewer.appendChild(pageDiv);
   });
 
@@ -1124,22 +1177,25 @@ async function shareInvoicePdf(){
     if(navigator.canShare && navigator.canShare({files:[file]})){ await navigator.share({files:[file], title:name}); } else { saveAs(pdfBlob, `${name}.pdf`); }
   }catch(err){
     console.error(err);
-    alert('Không thể chia sẻ PDF trực tiếp — sẽ tải file xuống thay thế.');
+    alert('Không thể chia sẻ PDF trực tiếp -- sẽ tải file xuống thay thế.');
     downloadInvoicePdf();
   }
 }
 
-/* modal binds (same) */
+/* logo/qr helpers */
+function saveImageToLocal(key, dataUrl){ try{ localStorage.setItem(key, dataUrl); }catch(e){ console.warn('Cannot persist image'); } }
+function loadImageFromLocal(key){ try{ return localStorage.getItem(key)||null; }catch(e){ return null; } }
+function loadInvoiceLogoWidth(){ const v = Number(localStorage.getItem('sa_invoice_logo_w')||0); return (v>0? v: 70); }
+function loadInvoiceQrSize(){ const v = Number(localStorage.getItem('sa_invoice_qr_s')||0); return (v>0? v: 64); }
+
+/* modal binds */
 $('exportInvoicesBtn').addEventListener('click', openInvoiceModal);
 $('modalCloseBtn').addEventListener('click', ()=>{ $('invoiceModal').style.display='none'; $('invoiceViewer').innerHTML=''; });
 $('modalPrintBtn').addEventListener('click', printInvoiceViewer);
 $('modalPdfBtn').addEventListener('click', downloadInvoicePdf);
 $('modalShareBtn').addEventListener('click', shareInvoicePdf);
-
-/* logo/qr handling: use resize before saving */
 $('uploadLogoBtn').addEventListener('click', ()=> $('logoFile').click());
 $('uploadQrBtn').addEventListener('click', ()=> $('qrFile').click());
-
 $('logoFile').addEventListener('change', (e)=>{
   const f = e.target.files[0]; if(!f) return;
   resizeImageFileToDataURL(f, 800, 0.7).then(d=>{ saveImageToLocal('sa_logo', d); alert('Logo đã lưu'); }).catch(err=>{ console.error(err); alert('Xử lý ảnh lỗi'); });
@@ -1148,31 +1204,30 @@ $('qrFile').addEventListener('change', (e)=>{
   const f = e.target.files[0]; if(!f) return;
   resizeImageFileToDataURL(f, 800, 0.7).then(d=>{ saveImageToLocal('sa_qr', d); alert('QR đã lưu'); }).catch(err=>{ console.error(err); alert('Xử lý ảnh lỗi'); });
 });
-
 $('logoWidth').addEventListener('change', (e)=>{ const v = Number(e.target.value) || loadInvoiceLogoWidth(); localStorage.setItem('sa_invoice_logo_w', String(v)); saveLocal(); });
 $('qrSize').addEventListener('change', (e)=>{ const v = Number(e.target.value) || loadInvoiceQrSize(); localStorage.setItem('sa_invoice_qr_s', String(v)); saveLocal(); });
 
-/* ---------- clear orders only (same) ---------- */
+/* ---------- clear orders ---------- */
 $('clearAllBtn').addEventListener('click', ()=>{
-  if(!confirm('Xóa tất cả ĐƠN HÀNG trong batch này? (Sản phẩm, khách, logo/QR và batch khác sẽ được giữ nguyên)')) return;
+  if(!confirm('Xóa tất cả ĐƠN HÀNG trong batch này?')) return;
   orders = [];
   saveLocal();
   renderOrders('');
   renderProducts();
-  alert('Đã xóa tất cả đơn hàng trong batch hiện tại. Sản phẩm, khách và logo/QR vẫn được giữ.');
+  alert('Đã xóa tất cả đơn hàng trong batch hiện tại.');
 });
 
-/* toggle customers (same) */
+/* toggle customers */
 $('toggleCustBtn').addEventListener('click', ()=>{
   const c = $('customersContent'); const btn = $('toggleCustBtn');
-  if(c.classList.contains('hidden')){ c.classList.remove('hidden'); btn.innerHTML='<i data-feather=\"eye-off\"></i> Ẩn'; }
-  else { c.classList.add('hidden'); btn.innerHTML='<i data-feather=\"eye\"></i> Hiện'; }
+  if(c.classList.contains('hidden')){ c.classList.remove('hidden'); btn.innerHTML='<i data-feather="eye-off"></i> Ẩn'; }
+  else { c.classList.add('hidden'); btn.innerHTML='<i data-feather="eye"></i> Hiện'; }
   feather.replace();
 });
 
-/* Batch UI binds (same) */
+/* Batch UI binds */
 $('newBatchBtn').addEventListener('click', ()=>{
-  const name = prompt('Tên batch mới (để quản lý ngày/phiên):', `Batch ${new Date().toLocaleString()}`);
+  const name = prompt('Tên batch mới:', `Batch ${new Date().toLocaleString()}`);
   if(name === null) return;
   createNewBatch(name.trim() || undefined);
 });
@@ -1182,13 +1237,12 @@ $('importBatchFile').addEventListener('change', (e)=>{ const f = e.target.files[
 $('batchSelect').addEventListener('change', (e)=>{ switchToBatch(e.target.value); });
 $('saveBtn').addEventListener('click', saveLocal);
 
-/* ---------- load/save on start: use loadFromPreferred() which tries GS first ---------- */
+/* ---------- load on start ---------- */
 window.addEventListener('load', async ()=>{
   try{
     await loadFromPreferred();
   }catch(err){
     console.warn('loadFromPreferred error', err);
-    // fallback to local original
     loadLocalOriginal();
     if(!batches || batches.length===0){
       const b = { id: uid('batch'), name: `Batch ${new Date().toLocaleString()}`, timestamp: new Date().toISOString(), products: [], orders: [] };
@@ -1203,33 +1257,11 @@ window.addEventListener('load', async ()=>{
   }
 });
 
-/* ---------- migration helper (expose to console) ---------- */
-function migrateProductIndexToId(){
-  try{
-    let changed=false;
-    batches.forEach(b=>{
-      (b.products||[]).forEach(p=>{ if(!p.id) p.id = uid('p'); });
-      (b.orders||[]).forEach(o=>{
-        (o.items||[]).forEach(it=>{
-          if(it.productIndex !== undefined){
-            const prod = (b.products||[])[it.productIndex];
-            if(prod){ it.productId = prod.id; it.productName = it.productName || prod.name; it.productPrice = it.productPrice || prod.price; }
-            delete it.productIndex; changed=true;
-          }
-        });
-      });
-    });
-    if(changed){ saveLocal(); alert('Migration hoàn tất'); } else alert('Không cần migrate');
-  }catch(e){ console.error(e); alert('Migration lỗi'); }
-}
-
-/* expose to console for debugging */
-window.migrateProductIndexToId = migrateProductIndexToId;
+/* ---------- expose for debug ---------- */
 window._gsSaveAll = gsSaveAll;
 window._gsLoadAll = gsLoadAll;
 window._saveLocal = saveLocal;
 window._loadFromPreferred = loadFromPreferred;
-
 </script>
 </body>
 </html>
