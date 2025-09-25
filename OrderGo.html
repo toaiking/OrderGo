@@ -1,0 +1,1235 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Sales Input — Mint Green (Batch) — GS Integrated</title>
+  <meta name="color-scheme" content="light">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#f6fffb; --card:#ffffff; --muted:#567568; --accent:#3EB489; --accent-dark:#2c8f6a;
+      --danger:#ef4444; --ok:#10b981; --input-bg:#fbfff8; --input-color:#03382f;
+      --placeholder:#7ea892; --radius:10px; --gap:12px; --icon-size:14px;
+    }
+    *{box-sizing:border-box}
+    body{font-family:Roboto, Arial, sans-serif;margin:0;background:var(--bg);color:var(--input-color);-webkit-font-smoothing:antialiased}
+    .wrap{max-width:1100px;margin:12px auto;padding:12px}
+    header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+    h1{font-size:18px;margin:0}
+    .muted{color:var(--muted);font-size:13px}
+    .card{background:var(--card);border-radius:10px;padding:12px;box-shadow:0 6px 18px rgba(8,30,20,0.04);margin-bottom:14px}
+    .actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;border:0;background:var(--accent);color:#fff;cursor:pointer;font-size:13px}
+    .btn.small{padding:6px 8px;font-size:12px}
+    .btn.secondary{background:transparent;color:var(--accent);border:1px solid rgba(62,180,137,0.12)}
+    .icon-btn{width:26px;height:26px;border-radius:6px;background:transparent;border:0;display:inline-grid;place-items:center;cursor:pointer;color:var(--muted)}
+    .icon-btn:hover{background:#f1fbf7;color:var(--accent)}
+    .icon-btn svg{width:var(--icon-size);height:var(--icon-size)}
+    table{width:100%;border-collapse:collapse;font-size:14px;table-layout:fixed;margin-top:8px}
+    thead th{background:linear-gradient(180deg,#fff,#f7fff9);padding:8px;text-align:left;font-weight:600;color:var(--input-color);border-bottom:1px solid #ecf6f1}
+    td,th{padding:8px;border-bottom:1px solid #ecf6f1;vertical-align:top;overflow-wrap:break-word;word-break:break-word;white-space:normal}
+    input,select,textarea{font-family:inherit;padding:8px;border-radius:8px;border:1px solid #e6efe7;background:var(--input-bg);color:var(--input-color)}
+    input::placeholder, textarea::placeholder { color: var(--placeholder); }
+    .form-row{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+    .form-row > *{flex:1;min-width:0}
+    .small{font-size:13px;padding:6px 8px}
+    .right{text-align:right}
+    .center{text-align:center}
+    .hidden{display:none}
+    .col-num{width:48px;min-width:48px;max-width:48px;text-align:center}
+    .order-filter{min-width:220px;padding:6px;border-radius:6px;border:1px solid #e6efe7;background:var(--input-bg)}
+
+/* invoice modal & print-friendly layout */
+    #invoiceModal{position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(0,0,0,0.45);display:none;align-items:center;justify-content:center;z-index:9999}
+    #invoiceModal .modal{width:95%;max-width:980px;background:#fff;border-radius:8px;padding:12px;max-height:92vh;display:flex;flex-direction:column}
+    #invoiceModal .toolbar{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+    #invoiceModal .viewer{overflow:auto;border:1px solid #eee;padding:8px;border-radius:6px;background:#fdfdfd;flex:1}
+
+/* A4 sizing for print and PDF - 8 cards (2 columns x 4 rows) */
+    .invoice-page{width:210mm;min-height:297mm;box-sizing:border-box;padding:8mm;margin:6mm auto;page-break-after:always}
+    .invoice-grid{display:flex;flex-wrap:wrap;gap:6mm;align-content:flex-start;align-items:flex-start}
+
+/* FIXED HEIGHT cards */
+    .invoice-card{
+      width:calc(50% - 3mm);
+      height:calc((297mm - 16mm - (3*6mm))/4);
+      box-sizing:border-box;
+      border:1px solid #ddd;
+      padding:6px;
+      border-radius:6px;
+      background:#fff;
+      display:flex;
+      flex-direction:column;
+      justify-content:flex-start;
+      font-size:11px;
+      overflow:hidden;
+      position:relative;
+    }
+    .invoice-card .head{display:flex;justify-content:space-between;align-items:center}
+    .invoice-card .body{display:flex;gap:8px;margin-top:6px}
+    .invoice-card .left{flex:1;min-width:0}
+    .invoice-card .right{flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+    .invoice-card .items{margin-top:6px}
+    .invoice-card .item-row{display:flex;justify-content:space-between;padding:2px 0;gap:8px;align-items:flex-start}
+    .invoice-card .item-name{flex:1;min-width:0;overflow-wrap:break-word}
+    .invoice-continues{margin-top:8px;border-top:1px dashed #ddd;padding-top:6px;font-size:11px}
+    .invoice-continues .cont-item{margin:4px 0;padding:2px 0;border-bottom:1px dotted #f0f0f0}
+
+    @media print {
+      body{background:#fff}
+      #invoiceModal{display:block !important}
+      .modal{box-shadow:none;border-radius:0;padding:0}
+      #invoiceModal .toolbar{display:none}
+      .invoice-page{margin:0;padding:6mm}
+      .invoice-card{box-shadow:none;border:1px solid #ccc}
+    }
+    @media (max-width:700px){
+      .invoice-card{width:100%;height:auto}
+      .invoice-page{padding:6mm}
+    }
+    .ac-list{position:absolute;left:0;right:0;background:var(--card);border:1px solid #e6efe7;border-radius:8px;box-shadow:0 6px 18px rgba(8,30,20,0.06);max-height:220px;overflow:auto;z-index:50}
+    .ac-item{padding:8px 10px;cursor:pointer;border-bottom:1px solid #f0f6f1}
+    .ac-item:hover{background:#f1fff7;color:var(--accent)}
+    .placeholder{color:var(--muted);font-style:italic}
+  </style>
+
+  <!-- libs -->
+  <script src="https://unpkg.com/feather-icons"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>Ứng dụng nhập liệu bán hàng — Batches</h1>
+        <div class="muted">Batch-based products & orders — Customers global</div>
+      </div>
+
+      <div style="display:flex;gap:8px;align-items:center">
+        <select id="batchSelect" style="padding:6px;border-radius:6px;border:1px solid #e6efe7;background:var(--input-bg);min-width:200px"></select>
+        <button id="newBatchBtn" class="btn small">New Batch</button>
+        <button id="exportBatchBtn" class="btn small">Export Batch</button>
+        <input type="file" id="importBatchFile" accept=".json" style="display:none">
+        <button id="importBatchBtn" class="btn small">Import Batch</button>
+
+        <input id="exportName" placeholder="Tên file khi xuất (tùy chọn)" style="padding:6px;border-radius:6px;border:1px solid #e6efe7;background:var(--input-bg);min-width:160px" />
+        <div class="actions">
+          <button id="downloadAllBtn" class="btn small"><i data-feather="download"></i> Tải Excel</button>
+          <button id="shareAllBtn" class="btn small"><i data-feather="share-2"></i> Chia sẻ</button>
+          <button id="saveBtn" class="btn secondary small"><i data-feather="save"></i> Lưu</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Products -->
+    <section class="card">
+      <h3 style="margin:0 0 8px 0">1. Quản lý hàng hóa (Batch current)</h3>
+      <table id="productsTable" aria-label="Products">
+        <thead>
+          <tr><th class="col-num">#</th><th>Tên hàng</th><th class="right">Nhập</th><th class="right">Đã bán</th><th class="right">Tồn</th><th class="right">Giá bán</th><th class="right">Hành động</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <div class="form-row" style="margin-top:10px">
+        <input id="pName" placeholder="Tên hàng">
+        <input id="pIn" type="number" placeholder="Số lượng nhập" min="0">
+        <input id="pPrice" type="number" placeholder="Giá bán" min="0">
+        <button id="addProdBtn" class="btn small"><i data-feather="plus"></i> Thêm</button>
+      </div>
+    </section>
+
+    <!-- Orders entry -->
+    <section class="card">
+      <h3 style="margin:0 0 8px 0">2. Nhập đơn hàng</h3>
+      <div class="form-row">
+        <div style="position:relative;flex:1">
+          <input id="orderCustomer" placeholder="Tên khách (gõ để tìm hoặc nhập mới)">
+          <div id="custAc" class="ac-list hidden"></div>
+        </div>
+      </div>
+      <div class="form-row" style="margin-top:8px">
+        <input id="orderAddress" placeholder="Địa chỉ">
+        <input id="orderPhone" placeholder="Số điện thoại">
+      </div>
+      <div id="orderItems" style="margin-top:8px">
+        <table id="orderItemsTable">
+          <thead><tr><th>Loại hàng</th><th style="width:110px">Số lượng</th><th style="width:110px">Giá bán (tại thời điểm lưu)</th><th style="width:60px">Xóa</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
+        <button id="addItemBtn" class="btn small"><i data-feather="plus"></i> Thêm dòng</button>
+        <button id="saveOrderBtn" class="btn small"><i data-feather="save"></i> Lưu đơn</button>
+        <button id="applyPricesBtn" class="btn secondary small" title="Áp dụng giá hiện tại cho tất cả đơn">Áp dụng giá hiện tại cho đơn</button>
+        <button id="prevOrderBtn" class="btn secondary small" title="Khách trước"><i data-feather="chevron-left"></i></button>
+        <button id="nextOrderBtn" class="btn secondary small" title="Khách sau"><i data-feather="chevron-right"></i></button>
+        <div style="flex:1"></div>
+        <div class="muted-small">Tổng đơn: <strong id="orderTotal">0</strong> đ</div>
+      </div>
+    </section>
+
+    <!-- Orders list -->
+    <section class="card">
+      <h3 style="margin:0 0 8px 0">3. Danh sách đơn hàng (Batch current)</h3>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px">
+        <input id="orderFilter" class="order-filter" placeholder="Lọc đơn: tên/địa chỉ/sdt/tên hàng..." />
+        <button id="clearFilterBtn" class="btn secondary small">Xóa filter</button>
+        <button id="exportOrdersExcelBtn" class="btn secondary small"><i data-feather="download"></i> Xuất Excel (Đơn)</button>
+        <button id="exportOrdersPdfBtn" class="btn secondary small"><i data-feather="file-text"></i> Xuất PDF (Đơn)</button>
+        <button id="exportInvoicesBtn" class="btn small"><i data-feather="printer"></i> Xem Hóa đơn (8/trang)</button>
+        <div style="flex:1"></div>
+      </div>
+
+      <table id="ordersTable">
+        <thead><tr><th class="col-num">#</th><th>Khách</th><th>Địa chỉ</th><th>Tất cả loại hàng (wrap)</th><th class="right">Tổng</th><th class="right">Hành động</th></tr></thead>
+        <tbody></tbody>
+      </table>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
+        <div class="muted-small">Tổng tất cả: <strong id="grandTotal">0</strong> đ</div>
+        <div class="actions">
+          <button id="clearAllBtn" class="btn secondary small"><i data-feather="trash-2"></i> Xóa hết đơn</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Customers -->
+    <section class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <h3 style="margin:0">4. Danh sách khách (Import/Export) — chung</h3>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button id="toggleCustBtn" class="btn secondary small"><i data-feather="eye-off"></i> Ẩn</button>
+        </div>
+      </div>
+
+      <div id="customersContent" style="margin-top:8px">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
+          <input type="file" id="custFile" accept=".xlsx,.xls" style="display:none">
+          <button id="importCustBtn" class="btn secondary small"><i data-feather="upload"></i> Import khách</button>
+          <button id="exportCustBtn" class="btn secondary small"><i data-feather="download"></i> Xuất khách</button>
+          <button id="exportCustPdfBtn" class="btn secondary small"><i data-feather="file-text"></i> Xuất PDF khách</button>
+        </div>
+        <div style="max-height:220px;overflow:auto">
+          <table id="customersTable"><thead><tr><th class="col-num">#</th><th>Tên</th><th>Địa chỉ</th><th>SĐT</th><th>Hành động</th></tr></thead><tbody></tbody></table>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Invoice modal -->
+  <div id="invoiceModal">
+    <div class="modal" role="dialog" aria-modal="true">
+      <div class="toolbar">
+        <input id="modalFilename" placeholder="Tên file hóa đơn (mặc định lấy từ trên)" style="padding:6px;border-radius:6px;border:1px solid #e6efe7;background:var(--input-bg);min-width:240px" />
+        <input id="logoFile" type="file" accept="image/*" style="display:none">
+        <input id="qrFile" type="file" accept="image/*" style="display:none">
+        <label style="display:flex;gap:6px;align-items:center">Logo W:<input id="logoWidth" type="number" min="20" max="200" value="70" style="width:80px;padding:6px;border-radius:6px;border:1px solid #e6efe7;background:var(--input-bg)"/></label>
+        <label style="display:flex;gap:6px;align-items:center">QR S:<input id="qrSize" type="number" min="24" max="200" value="64" style="width:80px;padding:6px;border-radius:6px;border:1px solid #e6efe7;background:var(--input-bg)"/></label>
+        <button id="uploadLogoBtn" class="btn small" title="Tải logo"><i data-feather="image"></i> Logo</button>
+        <button id="uploadQrBtn" class="btn small" title="Tải QR"><i data-feather="layout"></i> QR</button>
+        <button id="modalPrintBtn" class="btn small"><i data-feather="printer"></i> In</button>
+        <button id="modalPdfBtn" class="btn small"><i data-feather="download"></i> Tải PDF</button>
+        <button id="modalShareBtn" class="btn small"><i data-feather="share-2"></i> Chia sẻ</button>
+        <div style="flex:1"></div>
+        <button id="modalCloseBtn" class="btn secondary small">Đóng</button>
+      </div>
+      <div class="viewer" id="invoiceViewer" aria-live="polite"></div>
+    </div>
+  </div>
+
+<script>
+/* ---------- init icons ---------- */
+document.addEventListener('DOMContentLoaded', ()=>{ if(window.feather) feather.replace(); });
+
+/* ============================
+   GOOGLE SHEETS CONFIG
+   (đã chèn GS_URL bạn cung cấp)
+   ============================ */
+const GS_URL = 'https://script.google.com/macros/s/AKfycbzW8T_CJZymccBBSklCU3yTLN6rP19fPZv6rkpHsePdbaBD3OHkjcH84nR0oCvgMNw/exec';
+const USE_REMOTE = true; // nếu muốn tắt remote set false
+
+/* ---------- State / Batches (nguyên gốc) ---------- */
+let products = [];   // in current batch {id,name,in,price}
+let orders = [];     // in current batch [{id,customer,address,phone,items:[{productIndex,name,qty,price}], total, created}]
+let customers = [];  // global customers [{name,address,phone}]
+let batches = [];    // [{id,name,timestamp,products,orders}]
+let currentBatchId = null;
+let editingOrderIndex = -1;
+let currentOrderIndex = -1;
+
+/* ---------- Helpers ---------- */
+const $ = id => document.getElementById(id);
+const uid = (p='id') => p + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2,8);
+const todayStr = ()=>{ const d=new Date(); return `${String(d.getDate()).padStart(2,'0')}-${String(d.getMonth()+1).padStart(2,'0')}-${d.getFullYear()}`; };
+function filenameForExport(def){ const user = $('exportName')? $('exportName').value.trim() : ''; return user? user : (def || todayStr()); }
+
+/* ---------- Image resize helper (reduce base64 size) ---------- */
+function resizeImageFileToDataURL(file, maxWidth=800, quality=0.7){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onerror = ()=> reject(new Error('FileReader error'));
+    reader.onload = ()=>{
+      const img = new Image();
+      img.onload = ()=>{
+        const ratio = img.width / img.height || 1;
+        const w = Math.min(maxWidth, img.width);
+        const h = Math.round(w / ratio);
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img,0,0,w,h);
+        try{
+          const dataUrl = canvas.toDataURL('image/jpeg', quality);
+          resolve(dataUrl);
+        }catch(err){ reject(err); }
+      };
+      img.onerror = ()=> reject(new Error('Image load error'));
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+/* ---------- Local persistence (original) ---------- */
+function persistAll(){
+  try{
+    localStorage.setItem('sa_batches', JSON.stringify(batches));
+    localStorage.setItem('sa_current_batch', currentBatchId || '');
+    localStorage.setItem('sa_customers', JSON.stringify(customers));
+    localStorage.setItem('sa_invoice_logo_w', String(Number($('logoWidth') ? $('logoWidth').value : 70)));
+    localStorage.setItem('sa_invoice_qr_s', String(Number($('qrSize') ? $('qrSize').value : 64)));
+  }catch(e){ console.warn('Persist failed', e); }
+}
+
+/* ---------- GOOGLE SHEETS client (simple) ---------- */
+async function gsHealth(){
+  if(!USE_REMOTE) return false;
+  try{
+    const r = await fetch(GS_URL + '?action=health', {cache:'no-store'});
+    if(!r.ok) return false;
+    const j = await r.json();
+    return j && j.ok;
+  }catch(e){ return false; }
+}
+
+async function gsLoadAll(){
+  if(!USE_REMOTE) return false;
+  try{
+    const r = await fetch(GS_URL + '?action=readAll', {cache:'no-store'});
+    if(!r.ok) throw new Error('Network read failed');
+    const raw = await r.text();
+    if(!raw) return false;
+    const data = JSON.parse(raw);
+    // support both formats
+    if(Array.isArray(data)){
+      batches = data;
+      customers = [];
+      currentBatchId = (batches[0] && batches[0].id) || currentBatchId;
+    } else {
+      batches = data.batches || [];
+      customers = data.customers || [];
+      currentBatchId = data.currentBatchId || currentBatchId || (batches[0] && batches[0].id);
+    }
+    // load current batch to memory
+    const cur = batches.find(b=>b.id === currentBatchId) || batches[0];
+    if(cur) { products = JSON.parse(JSON.stringify(cur.products || [])); orders = JSON.parse(JSON.stringify(cur.orders || [])); }
+    console.log('gsLoadAll ok');
+    return true;
+  }catch(err){ console.warn('gsLoadAll failed', err); return false; }
+}
+
+async function gsSaveAll(){
+  if(!USE_REMOTE) return false;
+  try{
+    const payload = { action:'saveAll', data:{ batches: batches, customers: customers, currentBatchId: currentBatchId, meta:{ savedAt: new Date().toISOString() } } };
+    const r = await fetch(GS_URL, {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if(!r.ok) throw new Error('Network save failed');
+    const j = await r.json();
+    return j && j.ok;
+  }catch(err){ console.warn('gsSaveAll failed', err); return false; }
+}
+
+/* ---------- Wrapper: load preferred (GS -> local) ---------- */
+async function loadFromPreferred(){
+  if(USE_REMOTE && GS_URL && GS_URL.indexOf('script.google.com')===0){
+    const ok = await gsHealth();
+    if(ok){
+      const ok2 = await gsLoadAll();
+      if(ok2){
+        // ensure UI reflect
+        renderBatchList();
+        renderProducts(); renderCustomers(); renderOrders('');
+        ensureTwoRows();
+        feather.replace();
+        return;
+      }
+    }
+  }
+  // fallback to local
+  loadLocalOriginal();
+  // ensure at least one batch
+  if(!batches || batches.length===0){
+    const b = { id: uid('batch'), name: `Batch ${new Date().toLocaleString()}`, timestamp: new Date().toISOString(), products: [], orders: [] };
+    batches = [b]; currentBatchId = b.id;
+  }
+  if(!currentBatchId && batches.length>0) currentBatchId = batches[0].id;
+  const bcur = batches.find(bb=>bb.id===currentBatchId);
+  if(bcur) loadBatchToMemory(bcur);
+  renderBatchList();
+  renderProducts(); renderCustomers(); renderOrders('');
+  ensureTwoRows();
+  feather.replace();
+}
+
+/* ---------- Modify saveLocal to also attempt remote save (keeps original behavior) ---------- */
+/* We keep original implementation but rename to loadLocalOriginal/saveLocalOriginal internally, then expose same name to rest of code */
+function saveLocalOriginal(){
+  // Save current batch into batches and persist (original behavior)
+  if(currentBatchId){
+    const b = batches.find(bb => bb.id === currentBatchId);
+    if(b){
+      b.products = JSON.parse(JSON.stringify(products));
+      b.orders = JSON.parse(JSON.stringify(orders));
+      b.timestamp = new Date().toISOString();
+    }
+  }
+  persistAll();
+  try{
+    const btn=$('saveBtn'); if(btn){ btn.innerHTML='<i data-feather=\"check\"></i> Đã lưu'; feather.replace();
+      setTimeout(()=>{ btn.innerHTML='<i data-feather=\"save\"></i> Lưu'; feather.replace(); },900);
+    }
+  }catch(e){}
+}
+
+/* New saveLocal will call original saveLocal (sync) then attempt gsSaveAll asynchronously */
+function saveLocal(){
+  try{
+    saveLocalOriginal();
+  }catch(e){
+    console.warn('saveLocalOriginal error', e);
+  }
+  // Attempt remote save but do not block UI; log outcome
+  if(USE_REMOTE && GS_URL && GS_URL.indexOf('script.google.com')===0){
+    gsSaveAll().then(ok=>{ if(ok) console.log('Remote save ok'); else console.warn('Remote save failed'); }).catch(err=> console.warn('Remote save exception', err));
+  }
+}
+
+/* keep original loadLocal function as loadLocalOriginal (used if remote fails) */
+function loadLocalOriginal(){
+  try{ batches = JSON.parse(localStorage.getItem('sa_batches')||'[]'); }catch(e){ batches=[]; }
+  try{ currentBatchId = localStorage.getItem('sa_current_batch')||''; if(!currentBatchId && batches.length>0) currentBatchId = batches[0].id; }catch(e){ currentBatchId = (batches[0] && batches[0].id) || null; }
+  try{ customers = JSON.parse(localStorage.getItem('sa_customers')||'[]'); }catch(e){ customers=[]; }
+  const bcur = batches.find(bb=>bb.id===currentBatchId);
+  if(bcur) loadBatchToMemory(bcur);
+}
+
+/* logo/qr helpers (unchanged) */
+function saveImageToLocal(key, dataUrl){ try{ localStorage.setItem(key, dataUrl); }catch(e){ console.warn('Cannot persist image'); } }
+function loadImageFromLocal(key){ try{ return localStorage.getItem(key)||null; }catch(e){ return null; } }
+function loadInvoiceLogoWidth(){ const v = Number(localStorage.getItem('sa_invoice_logo_w')||0); return (v>0? v: 70); }
+function loadInvoiceQrSize(){ const v = Number(localStorage.getItem('sa_invoice_qr_s')||0); return (v>0? v: 64); }
+
+/* ---------- Batch management (same as original) ---------- */
+function createNewBatch(name){
+  const id = uid('batch');
+  const b = { id, name: name || (`Batch ${new Date().toLocaleString()}`), timestamp: new Date().toISOString(), products: [], orders: [] };
+  batches.unshift(b);
+  currentBatchId = id;
+  loadBatchToMemory(b);
+  saveLocal(); // uses new saveLocal (local + remote)
+  renderBatchList();
+  renderProducts(); renderOrders(''); 
+}
+function loadBatchToMemory(batch){
+  products = JSON.parse(JSON.stringify(batch.products || []));
+  orders = JSON.parse(JSON.stringify(batch.orders || []));
+}
+function switchToBatch(id){
+  const b = batches.find(bb=>bb.id===id);
+  if(!b) return;
+  // save current first
+  if(currentBatchId){
+    const cur = batches.find(bb=>bb.id===currentBatchId);
+    if(cur){
+      cur.products = JSON.parse(JSON.stringify(products));
+      cur.orders = JSON.parse(JSON.stringify(orders));
+      cur.timestamp = new Date().toISOString();
+    }
+  }
+  currentBatchId = id;
+  loadBatchToMemory(b);
+  saveLocal();
+  renderBatchList();
+  renderProducts(); renderOrders(''); renderCustomers();
+}
+function exportCurrentBatch(){
+  if(!currentBatchId){ alert('Chưa có batch nào để xuất'); return; }
+  const b = batches.find(bb=>bb.id===currentBatchId);
+  if(!b){ alert('Batch không tồn tại'); return; }
+  const data = JSON.stringify(b, null, 2);
+  const blob = new Blob([data], {type:'application/json'});
+  saveAs(blob, `${(b.name||'batch')}_${todayStr()}.json`);
+}
+function importBatchFile(file){
+  const reader = new FileReader();
+  reader.onload = (ev)=>{
+    try{
+      const data = JSON.parse(ev.target.result);
+      if(!data || !data.id || !data.products || !data.orders){ alert('File batch không hợp lệ'); return; }
+      // ensure unique id
+      data.id = uid('batch');
+      batches.unshift(data);
+      currentBatchId = data.id;
+      loadBatchToMemory(data);
+      saveLocal();
+      renderBatchList();
+      renderProducts(); renderOrders(''); alert('Import batch thành công');
+    }catch(err){ console.error(err); alert('Lỗi khi đọc file batch'); }
+  };
+  reader.readAsText(file);
+}
+
+/* ---------- compute sold counts (same) ---------- */
+function computeSoldMap(){
+  const sold = {};
+  orders.forEach(o => o.items.forEach(it => {
+    const idx = it.productIndex;
+    if(typeof idx === 'number' && idx >= 0) sold[idx] = (sold[idx]||0) + Number(it.qty||0);
+    else {
+      const found = products.findIndex(p => p.name.trim().toLowerCase() === (it.name||'').trim().toLowerCase());
+      if(found >= 0) sold[found] = (sold[found]||0) + Number(it.qty||0);
+    }
+  }));
+  return sold;
+}
+function syncOrderItemsWithProducts(){
+  orders.forEach(o=>{
+    o.items.forEach(it=>{
+      if(typeof it.productIndex === 'number' && products[it.productIndex] && products[it.productIndex].name === it.name) {
+        // ok
+      } else {
+        const found = products.findIndex(p => p.name.trim().toLowerCase() === (it.name||'').trim().toLowerCase());
+        if(found >= 0) it.productIndex = found;
+        else it.productIndex = null;
+      }
+    });
+  });
+}
+function updateOrdersTotals(applyPrices=false){
+  syncOrderItemsWithProducts();
+  orders.forEach(o=>{
+    let total = 0;
+    o.items.forEach(it=>{
+      let usedPrice = 0;
+      if(applyPrices){
+        if(typeof it.productIndex === 'number' && products[it.productIndex]) usedPrice = Number(products[it.productIndex].price || 0);
+        else {
+          const found = products.findIndex(p => p.name.trim().toLowerCase() === (it.name||'').trim().toLowerCase());
+          if(found>=0) usedPrice = Number(products[found].price||0), it.productIndex = found;
+        }
+        it.price = usedPrice;
+      } else {
+        if(typeof it.price === 'number') usedPrice = Number(it.price||0);
+        else if(typeof it.productIndex === 'number' && products[it.productIndex]) usedPrice = Number(products[it.productIndex].price||0);
+        else {
+          const found = products.findIndex(p => p.name.trim().toLowerCase() === (it.name||'').trim().toLowerCase());
+          if(found>=0) usedPrice = Number(products[found].price||0), it.productIndex = found;
+        }
+      }
+      total += usedPrice * Number(it.qty||0);
+    });
+    o.total = total;
+  });
+}
+
+/* ---------- Renderers (unchanged) ---------- */
+function renderBatchList(){
+  const sel = $('batchSelect');
+  sel.innerHTML = '';
+  batches.forEach(b=>{ const opt = document.createElement('option'); opt.value = b.id; opt.textContent = `${b.name} (${new Date(b.timestamp).toLocaleString()})`; sel.appendChild(opt); });
+  if(currentBatchId){
+    sel.value = currentBatchId;
+  } else if(batches.length>0){
+    currentBatchId = batches[0].id; sel.value = currentBatchId;
+  }
+}
+
+function renderProducts(){
+  const tbody = $('productsTable').querySelector('tbody'); tbody.innerHTML='';
+  const sold = computeSoldMap();
+  products.forEach((p,i)=>{
+    const inQty = Number(p.in||0);
+    const soldCnt = sold[i]||0;
+    const remain = inQty - soldCnt;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="col-num">${i+1}</td>
+      <td>${escapeHtml(p.name)}</td>
+      <td class="right">${inQty}</td>
+      <td class="right">${soldCnt}</td>
+      <td class="right">${remain}</td>
+      <td class="right">${Number(p.price||0).toLocaleString()}</td>
+      <td class="right">
+        <button class="icon-btn" data-idx="${i}" data-act="edit"><i data-feather="edit-2"></i></button>
+        <button class="icon-btn" data-idx="${i}" data-act="del"><i data-feather="trash-2"></i></button>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+  if(products.length===0){
+    const tr = document.createElement('tr'); tr.innerHTML = `<td class="col-num">-</td><td colspan="6" class="placeholder">Không có sản phẩm trong batch này.</td>`; tbody.appendChild(tr);
+  }
+  feather.replace();
+}
+
+function renderOrders(filterStr){
+  filterStr = String(filterStr||'').trim().toLowerCase();
+  const tbody = $('ordersTable').querySelector('tbody'); tbody.innerHTML='';
+
+  updateOrdersTotals(false);
+
+  let grand = 0;
+  orders.forEach((o, idx)=>{
+    const hay = `${o.customer} ${o.address||''} ${o.phone||''} ${o.items.map(it=>it.name).join(' ')}`.toLowerCase();
+    if(filterStr && !hay.includes(filterStr)) return;
+    const itemsStr = o.items.map(it=>`${escapeHtml(it.name)} x${it.qty}`).join('; ');
+    grand += Number(o.total||0);
+    const tr = document.createElement('tr');
+    tr.dataset.idx = idx;
+    tr.innerHTML = `
+      <td class="col-num"><input class="order-pos" type="number" min="1" value="${idx+1}" style="width:44px;padding:6px;border-radius:6px;border:1px solid #e6efe7;"/></td>
+      <td>${escapeHtml(o.customer)}</td>
+      <td>${escapeHtml(o.address||'')}</td>
+      <td>${itemsStr}</td>
+      <td class="right">${Number(o.total||0).toLocaleString()}</td>
+      <td class="right">
+        <div style="display:flex;gap:6px;align-items:center;justify-content:flex-end">
+          <button class="icon-btn" data-idx="${idx}" data-act="editOrder" title="Sửa"><i data-feather="edit-2"></i></button>
+          <button class="icon-btn" data-idx="${idx}" data-act="delOrder" title="Xóa"><i data-feather="trash-2"></i></button>
+          <button class="icon-btn" data-idx="${idx}" data-act="up" title="Lên"><i data-feather="arrow-up"></i></button>
+          <button class="icon-btn" data-idx="${idx}" data-act="down" title="Xuống"><i data-feather="arrow-down"></i></button>
+        </div>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+
+  $('grandTotal').textContent = grand.toLocaleString();
+  feather.replace();
+
+  // handlers
+  tbody.querySelectorAll('button').forEach(btn=>{
+    const idx = Number(btn.dataset.idx);
+    const act = btn.dataset.act;
+    if(act==='editOrder') btn.addEventListener('click', ()=> loadOrderToForm(idx));
+    if(act==='delOrder') btn.addEventListener('click', ()=> { if(confirm('Xóa đơn?')){ orders.splice(idx,1); saveLocal(); renderOrders($('orderFilter').value||''); renderProducts(); } });
+    if(act==='up') btn.addEventListener('click', ()=> { if(idx>0){ [orders[idx-1],orders[idx]]=[orders[idx],orders[idx-1]]; saveLocal(); renderOrders($('orderFilter').value||''); } });
+    if(act==='down') btn.addEventListener('click', ()=> { if(idx<orders.length-1){ [orders[idx+1],orders[idx]]=[orders[idx],orders[idx+1]]; saveLocal(); renderOrders($('orderFilter').value||''); } });
+  });
+
+  // reorder inputs
+  tbody.querySelectorAll('input.order-pos').forEach((inp, i)=>{
+    inp.addEventListener('change', ()=>{
+      const inputs = Array.from(document.querySelectorAll('#ordersTable tbody input.order-pos'));
+      const mapping = [];
+      inputs.forEach((el, idxVis)=>{
+        const row = el.closest('tr');
+        const globalIdx = Number(row.dataset.idx);
+        mapping.push({globalIdx, pos: Number(el.value) || (idxVis+1), origOrder: idxVis});
+      });
+      mapping.sort((a,b)=> a.pos - b.pos || a.origOrder - b.origOrder);
+      const visibleGlobal = mapping.map(m=>m.globalIdx);
+      const newOrders = visibleGlobal.map(i=>orders[i]);
+      const rest = orders.filter((_,i)=> !visibleGlobal.includes(i));
+      orders = newOrders.concat(rest);
+      saveLocal();
+      renderOrders($('orderFilter').value||'');
+      renderProducts();
+    });
+  });
+
+  // drag reorder (visible)
+  const tbodyEl = document.querySelector('#ordersTable tbody');
+  if(tbodyEl && tbodyEl._sortable === undefined){
+    tbodyEl._sortable = Sortable.create(tbodyEl, {
+      animation: 150,
+      onEnd: function(){
+        const rows = Array.from(tbodyEl.querySelectorAll('tr'));
+        const globals = rows.map(r => Number(r.dataset.idx));
+        const visibleOrders = globals.map(g=> orders[g]);
+        const rest = orders.filter((_,i)=> !globals.includes(i));
+        orders = [...visibleOrders, ...rest];
+        saveLocal();
+        renderOrders($('orderFilter').value||'');
+        renderProducts();
+      }
+    });
+  }
+
+  if(orders.length===0){
+    const tr = document.createElement('tr'); tr.innerHTML = `<td class="col-num">-</td><td colspan="5" class="placeholder">Không có đơn hàng trong batch này.</td>`; tbody.appendChild(tr);
+  }
+}
+
+function renderCustomers(){
+  const tbody = $('customersTable').querySelector('tbody'); tbody.innerHTML='';
+  if(customers.length===0){
+    const tr = document.createElement('tr'); tr.innerHTML = `<td class="col-num">-</td><td colspan="4" class="placeholder">Không có khách. Import hoặc lưu 1 đơn sẽ thêm khách vào danh sách.</td>`; tbody.appendChild(tr); feather.replace(); return;
+  }
+  customers.forEach((c,i)=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td class="col-num">${i+1}</td><td>${escapeHtml(c.name)}</td><td>${escapeHtml(c.address||'')}</td><td>${escapeHtml(c.phone||'')}</td><td class="right"><button class="icon-btn" data-idx="${i}" data-act="delcust"><i data-feather="trash-2"></i></button></td>`;
+    tr.addEventListener('click', ()=> { $('orderCustomer').value = c.name; $('orderAddress').value = c.address||''; $('orderPhone').value = c.phone||''; });
+    tbody.appendChild(tr);
+  });
+  // attach delete handlers
+  tbody.querySelectorAll('button[data-act="delcust"]').forEach(btn=>{
+    btn.addEventListener('click', (ev)=>{ ev.stopPropagation(); const idx = Number(btn.dataset.idx); if(confirm('Xóa khách? (không xóa đơn)')){ customers.splice(idx,1); saveLocal(); renderCustomers(); } });
+  });
+  feather.replace();
+}
+
+function escapeHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* ---------- products ops (kept original) ---------- */
+$('addProdBtn').addEventListener('click', ()=>{
+  const name = $('pName').value.trim(); const inQty = Number($('pIn').value||0); const price = Number($('pPrice').value||0);
+  if(!name){ alert('Nhập tên hàng'); $('pName').focus(); return; }
+  products.push({id: uid('p'), name, in: inQty, price});
+  $('pName').value=''; $('pIn').value=''; $('pPrice').value='';
+  saveLocal(); renderProducts(); renderOrderOptions(); renderOrders($('orderFilter').value||'');
+});
+
+/* product-level buttons are delegated */
+$('productsTable').addEventListener('click', (e)=>{
+  const btn = e.target.closest('button'); if(!btn) return;
+  const idx = Number(btn.dataset.idx); const act = btn.dataset.act;
+  if(act==='edit'){
+    const p = products[idx];
+    const oldName = p.name;
+    const newName = prompt('Tên hàng', p.name);
+    if(newName===null) return;
+    const newIn = prompt('Số lượng nhập', p.in);
+    if(newIn===null) return;
+    const newPriceStr = prompt('Giá bán', p.price);
+    if(newPriceStr===null) return;
+    const newPrice = Number(newPriceStr)||0;
+    p.name = newName.trim()||p.name;
+    p.in = Number(newIn)||0;
+    const priceChanged = (Number(p.price||0) !== newPrice);
+    p.price = newPrice;
+    if(oldName && oldName.trim().toLowerCase() !== p.name.trim().toLowerCase()){
+      orders.forEach(o=> o.items.forEach(it=> { if((it.name||'').trim().toLowerCase() === oldName.trim().toLowerCase()) it.name = p.name; }));
+    }
+    if(priceChanged){
+      const apply = confirm('Bạn vừa thay đổi giá. Áp dụng giá mới cho các đơn đã lưu trong batch này? (OK = có, Cancel = giữ giá cũ trong đơn)');
+      if(apply){ updateOrdersTotals(true); } else { updateOrdersTotals(false); }
+    } else { updateOrdersTotals(false); }
+    saveLocal();
+    renderProducts(); renderOrderOptions(); renderOrders($('orderFilter').value||'');
+  } else if(act==='del'){
+    if(confirm('Xác nhận xóa sản phẩm? (Các đơn cũ sẽ giữ tên, nếu không tương thích sẽ không có giá)')){
+      products.splice(idx,1);
+      orders.forEach(o=>{
+        o.items.forEach(it=>{
+          if(typeof it.productIndex === 'number'){
+            if(it.productIndex === idx) it.productIndex = null;
+            else if(it.productIndex > idx) it.productIndex = it.productIndex - 1;
+          }
+        });
+      });
+      syncOrderItemsWithProducts();
+      updateOrdersTotals(false);
+      saveLocal(); renderProducts(); renderOrderOptions(); renderOrders($('orderFilter').value||'');
+    }
+  }
+});
+
+/* ---------- order items UI (same) ---------- */
+function renderOrderOptions(){
+  document.querySelectorAll('#orderItemsTable tbody select').forEach(sel=>{
+    const val = sel.value;
+    sel.innerHTML = '<option value="">-- Chọn hàng --</option>' + products.map((p,i)=>`<option value="${i}">${escapeHtml(p.name)}</option>`).join('');
+    sel.value = val;
+  });
+}
+function newItemRow(item){
+  const tbody = document.querySelector('#orderItemsTable tbody');
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td><select><option value="">-- Chọn hàng --</option></select></td>
+    <td><input type="number" min="0" value="${item?item.qty:1}" style="width:88px"></td>
+    <td class="right priceTd">${item && typeof item.price === 'number' ? Number(item.price).toLocaleString() : '0'}</td>
+    <td class="center"><button class="icon-btn removeRow"><i data-feather="trash-2"></i></button></td>`;
+  tbody.appendChild(tr);
+  renderOrderOptions();
+  if(item && item.productIndex !== undefined && item.productIndex !== null){ const sel=tr.querySelector('select'); sel.value = item.productIndex; }
+  else if(item && item.name){
+    const sel = tr.querySelector('select');
+    const found = products.findIndex(p => p.name.trim().toLowerCase() === (item.name||'').trim().toLowerCase());
+    if(found >= 0) sel.value = found;
+  }
+  tr.querySelector('select').addEventListener('change', ()=> { computeOrderTotal(); });
+  tr.querySelector('input').addEventListener('input', ()=> { computeOrderTotal(); });
+  tr.querySelector('.removeRow').addEventListener('click', ()=>{ tr.remove(); computeOrderTotal(); });
+  feather.replace();
+  computeOrderTotal();
+  return tr;
+}
+function ensureTwoRows(){ const body=document.querySelector('#orderItemsTable tbody'); while(body.children.length<2) newItemRow(); }
+$('addItemBtn').addEventListener('click', ()=> newItemRow());
+function computeOrderTotal(){
+  const rows = Array.from(document.querySelectorAll('#orderItemsTable tbody tr'));
+  let total = 0;
+  rows.forEach(r=>{
+    const sel = r.querySelector('select'); const idx = sel?sel.value:''; const q = Number(r.querySelector('input').value||0);
+    let price = 0;
+    if(idx !== '' && idx !== null && idx !== undefined){
+      const p = products[Number(idx)];
+      if(p) price = Number(p.price||0);
+    }
+    r.querySelector('.priceTd').textContent = price.toLocaleString();
+    if(q>0) total += price * q;
+  });
+  $('orderTotal').textContent = total.toLocaleString();
+  return total;
+}
+
+/* ---------- customer autocomplete & update ---------- */
+function updateCustSuggestions(q){
+  const acEl = $('custAc');
+  if(!q || q.trim()===''){ acEl.classList.add('hidden'); return; }
+  const s = q.trim().toLowerCase();
+  const matches = customers.filter(c=> (c.name||'').toLowerCase().includes(s)).slice(0,30);
+  acEl.innerHTML = '';
+  if(matches.length===0){ acEl.innerHTML = '<div class="ac-item">Không có gợi ý</div>'; acEl.classList.remove('hidden'); return; }
+  matches.forEach(c=>{
+    const d = document.createElement('div'); d.className='ac-item';
+    d.innerHTML = `<strong>${escapeHtml(c.name)}</strong><div style="font-size:12px;color:var(--muted)">${escapeHtml(c.address||'')} ${c.phone?(' • '+escapeHtml(c.phone)):''}</div>`;
+    d.addEventListener('mousedown', (ev)=>{ ev.preventDefault(); $('orderCustomer').value = c.name; $('orderAddress').value = c.address||''; $('orderPhone').value = c.phone||''; acEl.classList.add('hidden'); computeOrderTotal(); });
+    acEl.appendChild(d);
+  });
+  acEl.classList.remove('hidden');
+}
+$('orderCustomer').addEventListener('input', (e)=> updateCustSuggestions(e.target.value));
+$('orderCustomer').addEventListener('blur', ()=> setTimeout(()=> $('custAc').classList.add('hidden'), 150));
+
+/* ---------- save order (and add/update customer) ---------- */
+$('saveOrderBtn').addEventListener('click', ()=>{
+  const customer = $('orderCustomer').value.trim(); if(!customer){ alert('Tên khách không được để trống'); $('orderCustomer').focus(); return; }
+  const address = $('orderAddress').value.trim(); const phone = $('orderPhone').value.trim();
+  const rows = Array.from(document.querySelectorAll('#orderItemsTable tbody tr')); const items=[];
+  rows.forEach(r=>{
+    const sel=r.querySelector('select'); if(!sel) return;
+    const idx=sel.value; if(idx===''||idx==null||idx===undefined) return;
+    const pidx=Number(idx);
+    const prod=products[pidx];
+    const qty=Number(r.querySelector('input').value||0);
+    if(qty<=0) return;
+    const priceSnapshot = prod ? Number(prod.price||0) : 0;
+    items.push({productIndex:pidx, name: prod?prod.name:'', qty, price: priceSnapshot});
+  });
+  if(items.length===0){ alert('Đơn không có hàng'); return; }
+  let total = 0;
+  items.forEach(it => { total += Number(it.price || 0) * it.qty; });
+  const orderObj = { id: uid('order'), customer, address, phone, items, total, created: new Date().toISOString() };
+  if(editingOrderIndex >= 0){ orders[editingOrderIndex] = orderObj; editingOrderIndex = -1; } else orders.push(orderObj);
+
+  const ex = customers.find(c => (c.name||'').toLowerCase() === customer.toLowerCase());
+  if(!ex) customers.push({name: customer, address, phone});
+  else { if(address) ex.address = address; if(phone) ex.phone = phone; }
+
+  // reset
+  $('orderCustomer').value=''; $('orderAddress').value=''; $('orderPhone').value='';
+  document.querySelector('#orderItemsTable tbody').innerHTML=''; ensureTwoRows(); computeOrderTotal();
+  saveLocal(); renderProducts(); renderOrders($('orderFilter').value||''); renderCustomers();
+});
+
+/* load order to edit */
+function loadOrderToForm(i){
+  if(i<0 || i>=orders.length) return;
+  const o = orders[i]; editingOrderIndex = i; currentOrderIndex = i;
+  $('orderCustomer').value = o.customer; $('orderAddress').value = o.address||''; $('orderPhone').value = o.phone||'';
+  const body = document.querySelector('#orderItemsTable tbody'); body.innerHTML = '';
+  o.items.forEach(it => newItemRow({productIndex: it.productIndex, qty: it.qty, name: it.name, price: it.price}));
+  ensureTwoRows(); computeOrderTotal();
+}
+
+/* prev/next */
+$('prevOrderBtn').addEventListener('click', ()=>{ if(orders.length===0) return; if(currentOrderIndex<=0) currentOrderIndex = orders.length-1; else currentOrderIndex--; loadOrderToForm(currentOrderIndex); });
+$('nextOrderBtn').addEventListener('click', ()=>{ if(orders.length===0) return; currentOrderIndex = (currentOrderIndex+1)%orders.length; loadOrderToForm(currentOrderIndex); });
+
+/* Apply current product prices to all orders (overwrite item.price) */
+$('applyPricesBtn').addEventListener('click', ()=>{
+  if(!confirm('Áp dụng giá hiện tại của sản phẩm cho tất cả đơn trong batch này? (Hành động này cập nhật item.price trong orders)')) return;
+  updateOrdersTotals(true);
+  saveLocal();
+  renderOrders($('orderFilter').value||'');
+  renderProducts();
+});
+
+/* ---------- import/export customers (same) ---------- */
+$('importCustBtn').addEventListener('click', ()=> $('custFile').click());
+$('custFile').addEventListener('change', (e)=>{
+  const f = e.target.files[0]; if(!f) return;
+  const reader = new FileReader();
+  reader.onload = (ev)=>{
+    try{
+      const data = new Uint8Array(ev.target.result);
+      const wb = XLSX.read(data, {type:'array'});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const arr = XLSX.utils.sheet_to_json(ws, {defval:''});
+      arr.forEach(r=>{
+        const name = r['Tên']||r['Name']||r['name']; if(!name) return;
+        const addr = r['Địa chỉ']||r['Address']||r['address']||'';
+        const phone = r['SĐT']||r['Phone']||r['phone']||'';
+        const ex = customers.find(c=>c.name.toLowerCase()===String(name).toLowerCase());
+        if(ex){ if(addr) ex.address = addr; if(phone) ex.phone = phone; } else customers.push({name, address:addr, phone});
+      });
+      saveLocal(); renderCustomers(); alert('Import khách thành công');
+    }catch(err){ console.error(err); alert('Lỗi đọc file'); }
+  };
+  reader.readAsArrayBuffer(f);
+});
+
+$('exportCustBtn').addEventListener('click', ()=>{
+  if(customers.length===0){ alert('Không có khách'); return; }
+  const ws = XLSX.utils.json_to_sheet(customers.map(c=>({Ten:c.name, Dia_chi:c.address, Dien_thoai:c.phone})));
+  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Customers');
+  XLSX.writeFile(wb, `${filenameForExport('Khach_hang')}.xlsx`);
+});
+
+$('exportCustPdfBtn').addEventListener('click', ()=>{
+  if(customers.length===0){ alert('Không có khách'); return; }
+  const wrapper = document.createElement('div'); wrapper.style.fontFamily='Roboto, Arial'; wrapper.style.padding='8px';
+  const table = document.createElement('table'); table.style.width='100%';
+  table.innerHTML = '<thead><tr><th>#</th><th>Tên</th><th>Địa chỉ</th><th>SĐT</th></tr></thead>';
+  const tb = document.createElement('tbody');
+  customers.forEach((c,i)=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${i+1}</td><td>${escapeHtml(c.name)}</td><td>${escapeHtml(c.address||'')}</td><td>${escapeHtml(c.phone||'')}</td>`; tb.appendChild(tr); });
+  table.appendChild(tb); wrapper.appendChild(table);
+  html2pdf().from(wrapper).set({margin:10, filename:`${filenameForExport('Khach_hang')}.pdf`, html2canvas:{scale:1.3}}).save();
+});
+
+/* ---------- order filter ---------- */
+$('orderFilter').addEventListener('input', (e)=> renderOrders(e.target.value));
+$('clearFilterBtn').addEventListener('click', ()=>{ $('orderFilter').value=''; renderOrders(''); });
+
+/* ---------- export and sharing ---------- */
+function buildWorkbookProductsOrders(){
+  updateOrdersTotals(false);
+  const soldMap = computeSoldMap();
+  const prodRows = products.map((p,i) => ({Ten:p.name, Nhap:Number(p.in)||0, Da_ban: soldMap[i]||0, Ton: (Number(p.in)||0)-(soldMap[i]||0), Gia_ban: p.price||0}));
+  const orderRows = orders.map((o,i)=>({
+    STT:i+1, Khach_hang:o.customer, Dia_chi:o.address, Dien_thoai:o.phone,
+    Hang: o.items.map(it => `${it.name} x${it.qty}`).join('; '),
+    Tong_tien:o.total, Ngay:new Date(o.created).toLocaleString()
+  }));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(prodRows), 'Products');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(orderRows), 'Orders');
+  return wb;
+}
+$('downloadAllBtn').addEventListener('click', ()=>{ const wb = buildWorkbookProductsOrders(); XLSX.writeFile(wb, `${filenameForExport('Hang_va_Don')}.xlsx`); });
+
+$('shareAllBtn').addEventListener('click', async ()=>{
+  const wb = buildWorkbookProductsOrders();
+  const arr = XLSX.write(wb, {bookType:'xlsx', type:'array'});
+  const blob = new Blob([arr], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  const fileName = `${filenameForExport('Hang_va_Don')}.xlsx`;
+  const file = new File([blob], fileName, {type:blob.type});
+  if(navigator.canShare && navigator.canShare({files:[file]})){
+    try{ await navigator.share({files:[file], title:fileName}); return; }catch(e){ /* fallback */ }
+  }
+  saveAs(blob, fileName);
+});
+
+$('exportOrdersExcelBtn').addEventListener('click', ()=>{
+  updateOrdersTotals(false);
+  const orderRows = orders.map((o,i)=>({STT:i+1, Khach_hang:o.customer, Dia_chi:o.address, Dien_thoai:o.phone, Hang:o.items.map(it=>`${it.name} x${it.qty} @ ${Number(it.price||0).toLocaleString()}`).join('; '), Tong_tien:o.total, Ngay:new Date(o.created).toLocaleString()}));
+  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(orderRows), 'Orders');
+  XLSX.writeFile(wb, `${filenameForExport('Danh_sach_don')}.xlsx`);
+});
+
+$('exportOrdersPdfBtn').addEventListener('click', ()=>{
+  if(orders.length===0){ alert('Không có đơn'); return; }
+  updateOrdersTotals(false);
+  const wrapper = document.createElement('div'); wrapper.style.fontFamily='Roboto,Arial'; wrapper.style.padding='8px';
+  const table = document.createElement('table'); table.style.width='100%';
+  table.innerHTML = '<thead><tr><th>#</th><th>Khách</th><th>Địa chỉ</th><th>SĐT</th><th>Hàng</th><th>Tổng</th></tr></thead>';
+  const tb = document.createElement('tbody');
+  orders.forEach((o,i)=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${i+1}</td><td>${escapeHtml(o.customer)}</td><td>${escapeHtml(o.address||'')}</td><td>${escapeHtml(o.phone||'')}</td><td>${escapeHtml(o.items.map(it=>`${it.name} x${it.qty} @ ${Number(it.price||0).toLocaleString()}`).join('; '))}</td><td class="right">${Number(o.total||0).toLocaleString()}</td>`;
+    tb.appendChild(tr);
+  });
+  table.appendChild(tb); wrapper.appendChild(table);
+  html2pdf().from(wrapper).set({margin:10, filename:`${filenameForExport('Danh_sach_don')}.pdf`, html2canvas:{scale:1.2}}).save();
+});
+
+/* ---------- invoices modal functions (unchanged) ---------- */
+function buildInvoicePages(){
+  const perPage = 8;
+  const pages = [];
+  for(let p=0;p<Math.ceil(orders.length/perPage);p++){
+    const start = p*perPage, end = Math.min(start+perPage, orders.length);
+    const pageOrders = [];
+    for(let i=start;i<end;i++) pageOrders.push({order: orders[i], globalIndex: i});
+    pages.push(pageOrders);
+  }
+  return pages;
+}
+
+function openInvoiceModal(){
+  if(orders.length===0){ alert('Không có đơn'); return; }
+  updateOrdersTotals(false);
+  const viewer = $('invoiceViewer'); viewer.innerHTML='';
+  const pages = buildInvoicePages();
+  const logoData = loadImageFromLocal('sa_logo') || null;
+  const qrData = loadImageFromLocal('sa_qr') || null;
+  const logoW = Number(localStorage.getItem('sa_invoice_logo_w')||$('logoWidth')?.value || 70);
+  const qrS = Number(localStorage.getItem('sa_invoice_qr_s')||$('qrSize')?.value || 64);
+  const visiblePerCard = 4;
+
+  pages.forEach((pageOrders, pageIndex)=>{
+    const pageDiv = document.createElement('div'); pageDiv.className='invoice-page';
+    const grid = document.createElement('div'); grid.className='invoice-grid';
+    const overflowList = [];
+
+    pageOrders.forEach(obj=>{
+      const o = obj.order; const gIdx = obj.globalIndex;
+      const card = document.createElement('div'); card.className='invoice-card';
+
+      const visible = o.items.slice(0, visiblePerCard);
+      const overflow = o.items.slice(visiblePerCard);
+      if(overflow.length > 0) overflowList.push({globalIndex: gIdx, items: overflow});
+
+      let total = 0;
+      o.items.forEach(it => { total += Number(it.price || 0) * Number(it.qty || 0); });
+
+      const leftHtml = `
+        <div class="head"><div style="font-weight:700">HÓA ĐƠN</div>${logoData? `<img src="${logoData}" style="width:${logoW}px;height:auto;object-fit:contain" alt="logo">` : ''}</div>
+        <div style="font-size:12px;margin-top:6px;line-height:1.1">
+          <div><strong>Khách:</strong> ${escapeHtml(o.customer)}</div>
+          <div><strong>Địa chỉ:</strong> ${escapeHtml(o.address||'')}</div>
+          <div><strong>SĐT:</strong> ${escapeHtml(o.phone||'')}</div>
+          <div style="margin-top:6px"><strong>Ngày:</strong> ${new Date(o.created).toLocaleString()}</div>
+        </div>
+        <div class="items">
+          ${visible.map(it=>`<div class="item-row"><div class="item-name">${escapeHtml(it.name)}</div><div style="width:36px;text-align:center">${it.qty}</div></div>`).join('')}
+        </div>
+      `;
+
+      const rightHtml = `
+        <div style="font-size:11px;text-align:right">
+          <div style="margin-bottom:6px"><strong>Tổng:</strong></div>
+          <div style="font-weight:700;font-size:13px">${Number(total||0).toLocaleString()} đ</div>
+        </div>
+        ${qrData? `<img src="${qrData}" alt="qr" style="width:${qrS}px;height:${qrS}px;object-fit:contain;margin-top:6px"/>` : ''}
+      `;
+
+      const leftDiv = document.createElement('div'); leftDiv.className='left'; leftDiv.innerHTML = leftHtml;
+      const rightDiv = document.createElement('div'); rightDiv.className='right'; rightDiv.style.width = Math.max(qrS + 20, 110) + 'px'; rightDiv.innerHTML = rightHtml;
+      const bodyDiv = document.createElement('div'); bodyDiv.className='body'; bodyDiv.appendChild(leftDiv); bodyDiv.appendChild(rightDiv);
+      card.appendChild(bodyDiv);
+
+      if(overflow.length > 0){
+        const more = document.createElement('div');
+        more.style.marginTop = '6px'; more.style.fontSize = '11px'; more.style.color = '#a00';
+        more.textContent = `+${overflow.length} mặt hàng khác (xem phần "Tiếp theo" phía dưới trang)`;
+        card.appendChild(more);
+      }
+      const footer = document.createElement('div'); footer.className = 'invoice-footer'; footer.style.marginTop = '6px';
+      footer.innerHTML = `<small>Tài khoản: Techcombank - 19029487917027<br/>Ghi chú: Cảm ơn quý khách</small>`;
+      card.appendChild(footer);
+
+      grid.appendChild(card);
+    });
+
+    pageDiv.appendChild(grid);
+
+    if(overflowList.length > 0){
+      const cont = document.createElement('div'); cont.className = 'invoice-continues';
+      cont.innerHTML = `<strong>Tiếp theo — Mặt hàng bổ sung (trang ${pageIndex+1})</strong>`;
+      overflowList.forEach(entry=>{
+        const ord = orders[entry.globalIndex];
+        const line = document.createElement('div'); line.className = 'cont-item';
+        line.innerHTML = `<strong>Hóa đơn #${entry.globalIndex+1} — ${escapeHtml(ord.customer)}:</strong> ${entry.items.map(it=>`${escapeHtml(it.name)} x${it.qty}`).join('; ')}`;
+        cont.appendChild(line);
+      });
+      pageDiv.appendChild(cont);
+    }
+
+    viewer.appendChild(pageDiv);
+  });
+
+  $('modalFilename').value = $('exportName').value || `${todayStr()} - Hoa_don`;
+  $('logoWidth').value = loadInvoiceLogoWidth();
+  $('qrSize').value = loadInvoiceQrSize();
+  $('invoiceModal').style.display = 'flex';
+  feather.replace();
+}
+
+function printInvoiceViewer(){
+  const content = $('invoiceViewer').innerHTML;
+  const w = window.open('', '_blank');
+  const doc = w.document;
+  const css = `<style>
+    @page { size: A4; margin:6mm }
+    body{font-family:Roboto,Arial;margin:0;padding:0}
+    .invoice-page{width:210mm;min-height:297mm;box-sizing:border-box;padding:6mm;margin:0 auto}
+    .invoice-grid{display:flex;flex-wrap:wrap;gap:6mm;align-items:flex-start}
+    .invoice-card{width:calc(50% - 3mm);height:calc((297mm - 16mm - (3*6mm))/4);box-sizing:border-box;border:1px solid #ddd;padding:6px;border-radius:6px;background:#fff;display:flex;flex-direction:column;justify-content:flex-start;font-size:11px;overflow:hidden}
+    .body{display:flex;gap:8px}
+    .left{flex:1;min-width:0}
+    .right{flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+    .items{margin-top:6px}
+    .item-row{display:flex;justify-content:space-between;padding:2px 0;gap:8px}
+    .invoice-continues{margin-top:8px;border-top:1px dashed #ddd;padding-top:6px;font-size:11px}
+    img{max-width:100%;height:auto}
+  </style>`;
+  doc.open();
+  doc.write(`<html><head><title>${escapeHtml(filenameForExport('Hoa_don'))}</title>${css}</head><body>${content}</body></html>`);
+  doc.close();
+  w.focus();
+  setTimeout(()=>{ w.print(); }, 700);
+}
+
+function downloadInvoicePdf(){
+  const name = $('modalFilename').value.trim() || filenameForExport('Hoa_don');
+  const el = document.createElement('div'); el.innerHTML = $('invoiceViewer').innerHTML;
+  html2pdf().from(el).set({
+    margin:[6,6,6,6],
+    filename: `${name}.pdf`,
+    html2canvas:{scale:1.3, useCORS:true, allowTaint:true},
+    jsPDF:{unit:'mm', format:'a4', orientation:'portrait'},
+    pagebreak:{mode:['css','legacy']}
+  }).save();
+}
+
+async function shareInvoicePdf(){
+  const name = $('modalFilename').value.trim() || filenameForExport('Hoa_don');
+  const el = document.createElement('div'); el.innerHTML = $('invoiceViewer').innerHTML;
+  try{
+    const opt = { margin:[6,6,6,6], html2canvas:{scale:1.0, useCORS:true, allowTaint:true}, jsPDF:{unit:'mm', format:'a4', orientation:'portrait'}, pagebreak:{mode:['css','legacy']} };
+    const worker = html2pdf().from(el).set(opt);
+    const pdfBlob = await worker.outputPdf('blob');
+    const file = new File([pdfBlob], `${name}.pdf`, {type: 'application/pdf'});
+    if(navigator.canShare && navigator.canShare({files:[file]})){ await navigator.share({files:[file], title:name}); } else { saveAs(pdfBlob, `${name}.pdf`); }
+  }catch(err){
+    console.error(err);
+    alert('Không thể chia sẻ PDF trực tiếp — sẽ tải file xuống thay thế.');
+    downloadInvoicePdf();
+  }
+}
+
+/* modal binds (same) */
+$('exportInvoicesBtn').addEventListener('click', openInvoiceModal);
+$('modalCloseBtn').addEventListener('click', ()=>{ $('invoiceModal').style.display='none'; $('invoiceViewer').innerHTML=''; });
+$('modalPrintBtn').addEventListener('click', printInvoiceViewer);
+$('modalPdfBtn').addEventListener('click', downloadInvoicePdf);
+$('modalShareBtn').addEventListener('click', shareInvoicePdf);
+
+/* logo/qr handling: use resize before saving */
+$('uploadLogoBtn').addEventListener('click', ()=> $('logoFile').click());
+$('uploadQrBtn').addEventListener('click', ()=> $('qrFile').click());
+
+$('logoFile').addEventListener('change', (e)=>{
+  const f = e.target.files[0]; if(!f) return;
+  resizeImageFileToDataURL(f, 800, 0.7).then(d=>{ saveImageToLocal('sa_logo', d); alert('Logo đã lưu'); }).catch(err=>{ console.error(err); alert('Xử lý ảnh lỗi'); });
+});
+$('qrFile').addEventListener('change', (e)=>{
+  const f = e.target.files[0]; if(!f) return;
+  resizeImageFileToDataURL(f, 800, 0.7).then(d=>{ saveImageToLocal('sa_qr', d); alert('QR đã lưu'); }).catch(err=>{ console.error(err); alert('Xử lý ảnh lỗi'); });
+});
+
+$('logoWidth').addEventListener('change', (e)=>{ const v = Number(e.target.value) || loadInvoiceLogoWidth(); localStorage.setItem('sa_invoice_logo_w', String(v)); saveLocal(); });
+$('qrSize').addEventListener('change', (e)=>{ const v = Number(e.target.value) || loadInvoiceQrSize(); localStorage.setItem('sa_invoice_qr_s', String(v)); saveLocal(); });
+
+/* ---------- clear orders only (same) ---------- */
+$('clearAllBtn').addEventListener('click', ()=>{
+  if(!confirm('Xóa tất cả ĐƠN HÀNG trong batch này? (Sản phẩm, khách, logo/QR và batch khác sẽ được giữ nguyên)')) return;
+  orders = [];
+  saveLocal();
+  renderOrders('');
+  renderProducts();
+  alert('Đã xóa tất cả đơn hàng trong batch hiện tại. Sản phẩm, khách và logo/QR vẫn được giữ.');
+});
+
+/* toggle customers (same) */
+$('toggleCustBtn').addEventListener('click', ()=>{
+  const c = $('customersContent'); const btn = $('toggleCustBtn');
+  if(c.classList.contains('hidden')){ c.classList.remove('hidden'); btn.innerHTML='<i data-feather=\"eye-off\"></i> Ẩn'; }
+  else { c.classList.add('hidden'); btn.innerHTML='<i data-feather=\"eye\"></i> Hiện'; }
+  feather.replace();
+});
+
+/* Batch UI binds (same) */
+$('newBatchBtn').addEventListener('click', ()=>{
+  const name = prompt('Tên batch mới (để quản lý ngày/phiên):', `Batch ${new Date().toLocaleString()}`);
+  if(name === null) return;
+  createNewBatch(name.trim() || undefined);
+});
+$('exportBatchBtn').addEventListener('click', exportCurrentBatch);
+$('importBatchBtn').addEventListener('click', ()=> $('importBatchFile').click());
+$('importBatchFile').addEventListener('change', (e)=>{ const f = e.target.files[0]; if(!f) return; importBatchFile(f); });
+$('batchSelect').addEventListener('change', (e)=>{ switchToBatch(e.target.value); });
+$('saveBtn').addEventListener('click', saveLocal);
+
+/* ---------- load/save on start: use loadFromPreferred() which tries GS first ---------- */
+window.addEventListener('load', async ()=>{
+  try{
+    await loadFromPreferred();
+  }catch(err){
+    console.warn('loadFromPreferred error', err);
+    // fallback to local original
+    loadLocalOriginal();
+    if(!batches || batches.length===0){
+      const b = { id: uid('batch'), name: `Batch ${new Date().toLocaleString()}`, timestamp: new Date().toISOString(), products: [], orders: [] };
+      batches = [b]; currentBatchId = b.id;
+    }
+    const bcur = batches.find(bb=>bb.id===currentBatchId);
+    if(bcur) loadBatchToMemory(bcur);
+    renderBatchList();
+    renderProducts(); renderCustomers(); renderOrders('');
+    ensureTwoRows();
+    feather.replace();
+  }
+});
+
+/* ---------- migration helper (expose to console) ---------- */
+function migrateProductIndexToId(){
+  try{
+    let changed=false;
+    batches.forEach(b=>{
+      (b.products||[]).forEach(p=>{ if(!p.id) p.id = uid('p'); });
+      (b.orders||[]).forEach(o=>{
+        (o.items||[]).forEach(it=>{
+          if(it.productIndex !== undefined){
+            const prod = (b.products||[])[it.productIndex];
+            if(prod){ it.productId = prod.id; it.productName = it.productName || prod.name; it.productPrice = it.productPrice || prod.price; }
+            delete it.productIndex; changed=true;
+          }
+        });
+      });
+    });
+    if(changed){ saveLocal(); alert('Migration hoàn tất'); } else alert('Không cần migrate');
+  }catch(e){ console.error(e); alert('Migration lỗi'); }
+}
+
+/* expose to console for debugging */
+window.migrateProductIndexToId = migrateProductIndexToId;
+window._gsSaveAll = gsSaveAll;
+window._gsLoadAll = gsLoadAll;
+window._saveLocal = saveLocal;
+window._loadFromPreferred = loadFromPreferred;
+
+</script>
+</body>
+</html>
