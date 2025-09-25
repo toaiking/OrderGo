@@ -1,12 +1,13 @@
-<!doctype html>
+<!DOCTYPE html>
+
 <html lang="vi">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Sales Input -- Mint Green (Batch) -- GS Integrated</title>
-  <meta name="color-scheme" content="light">
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-  <style>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>Sales Input -- Mint Green (Batch) -- GS Integrated</title>
+<meta content="light" name="color-scheme"/>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&amp;display=swap" rel="stylesheet"/>
+<style>
     :root{
       --bg:#f6fffb; --card:#ffffff; --muted:#567568; --accent:#3EB489; --accent-dark:#2c8f6a;
       --danger:#ef4444; --ok:#10b981; --input-bg:#fbfff8; --input-color:#03382f;
@@ -93,156 +94,142 @@
     .ac-item:hover{background:#f1fff7;color:var(--accent)}
     .placeholder{color:var(--muted);font-style:italic}
   </style>
-
-  <!-- libs -->
-  <script src="https://unpkg.com/feather-icons"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<!-- libs -->
+<script src="https://unpkg.com/feather-icons"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <div>
-        <h1>Ứng dụng nhập liệu bán hàng -- Batches</h1>
-        <div class="muted">Batch-based products & orders -- Customers global</div>
-      </div>
-
-      <div style="display:flex;gap:8px;align-items:center">
-        <select id="batchSelect" style="padding:6px;border-radius:6px;border:1px solid #e6efe7;background:var(--input-bg);min-width:200px"></select>
-        <button id="newBatchBtn" class="btn small">New Batch</button>
-        <button id="exportBatchBtn" class="btn small">Export Batch</button>
-        <input type="file" id="importBatchFile" accept=".json" style="display:none">
-        <button id="importBatchBtn" class="btn small">Import Batch</button>
-
-        <input id="exportName" placeholder="Tên file khi xuất (tùy chọn)" style="padding:6px;border-radius:6px;border:1px solid #e6efe7;background:var(--input-bg);min-width:160px" />
-        <div class="actions">
-          <button id="downloadAllBtn" class="btn small"><i data-feather="download"></i> Tải Excel</button>
-          <button id="shareAllBtn" class="btn small"><i data-feather="share-2"></i> Chia sẻ</button>
-          <button id="saveBtn" class="btn secondary small"><i data-feather="save"></i> Lưu</button>
-        </div>
-      </div>
-    </header>
-
-    <!-- Products -->
-    <section class="card">
-      <h3 style="margin:0 0 8px 0">1. Quản lý hàng hóa (Batch current)</h3>
-      <table id="productsTable" aria-label="Products">
-        <thead>
-          <tr><th class="col-num">#</th><th>Tên hàng</th><th class="right">Nhập</th><th class="right">Đã bán</th><th class="right">Tồn</th><th class="right">Giá bán</th><th class="right">Hành động</th></tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-      <div class="form-row" style="margin-top:10px">
-        <input id="pName" placeholder="Tên hàng">
-        <input id="pIn" type="number" placeholder="Số lượng nhập" min="0">
-        <input id="pPrice" type="number" placeholder="Giá bán" min="0">
-        <button id="addProdBtn" class="btn small"><i data-feather="plus"></i> Thêm</button>
-      </div>
-    </section>
-
-    <!-- Orders entry -->
-    <section class="card">
-      <h3 style="margin:0 0 8px 0">2. Nhập đơn hàng</h3>
-      <div class="form-row">
-        <div style="position:relative;flex:1">
-          <input id="orderCustomer" placeholder="Tên/địa chỉ/SĐT (gõ để tìm hoặc nhập mới)">
-          <div id="custAc" class="ac-list hidden"></div>
-        </div>
-      </div>
-      <div class="form-row" style="margin-top:8px">
-        <input id="orderAddress" placeholder="Địa chỉ">
-        <input id="orderPhone" placeholder="Số điện thoại">
-      </div>
-      <div id="orderItems" style="margin-top:8px">
-        <table id="orderItemsTable">
-          <thead><tr><th>Loại hàng</th><th style="width:110px">Số lượng</th><th style="width:110px">Giá bán (tại thời điểm lưu)</th><th style="width:60px">Xóa</th></tr></thead>
-          <tbody></tbody>
-        </table>
-      </div>
-
-      <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
-        <button id="addItemBtn" class="btn small"><i data-feather="plus"></i> Thêm dòng</button>
-        <button id="saveOrderBtn" class="btn small"><i data-feather="save"></i> Lưu đơn</button>
-        <button id="applyPricesBtn" class="btn secondary small" title="Áp dụng giá hiện tại cho tất cả đơn">Áp dụng giá hiện tại cho đơn</button>
-        <button id="prevOrderBtn" class="btn secondary small" title="Khách trước"><i data-feather="chevron-left"></i></button>
-        <button id="nextOrderBtn" class="btn secondary small" title="Khách sau"><i data-feather="chevron-right"></i></button>
-        <div style="flex:1"></div>
-        <div class="muted-small">Tổng đơn: <strong id="orderTotal">0</strong> đ</div>
-      </div>
-    </section>
-
-    <!-- Orders list -->
-    <section class="card">
-      <h3 style="margin:0 0 8px 0">3. Danh sách đơn hàng (Batch current)</h3>
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px">
-        <input id="orderFilter" class="order-filter" placeholder="Lọc đơn: tên/địa chỉ/sdt/tên hàng..." />
-        <button id="clearFilterBtn" class="btn secondary small">Xóa filter</button>
-        <button id="exportOrdersExcelBtn" class="btn secondary small"><i data-feather="download"></i> Xuất Excel (Đơn)</button>
-        <button id="exportOrdersPdfBtn" class="btn secondary small"><i data-feather="file-text"></i> Xuất PDF (Đơn)</button>
-        <button id="exportInvoicesBtn" class="btn small"><i data-feather="printer"></i> Xem Hóa đơn (8/trang)</button>
-        <div style="flex:1"></div>
-      </div>
-
-      <table id="ordersTable">
-        <thead><tr><th class="col-num">#</th><th>Khách</th><th>Địa chỉ</th><th>Tất cả loại hàng (wrap)</th><th class="right">Tổng</th><th class="right">Hành động</th></tr></thead>
-        <tbody></tbody>
-      </table>
-
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
-        <div class="muted-small">Tổng tất cả: <strong id="grandTotal">0</strong> đ</div>
-        <div class="actions">
-          <button id="clearAllBtn" class="btn secondary small"><i data-feather="trash-2"></i> Xóa hết đơn</button>
-        </div>
-      </div>
-    </section>
-
-    <!-- Customers -->
-    <section class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <h3 style="margin:0">4. Danh sách khách (Import/Export) -- chung</h3>
-        <div style="display:flex;gap:8px;align-items:center">
-          <button id="toggleCustBtn" class="btn secondary small"><i data-feather="eye-off"></i> Ẩn</button>
-        </div>
-      </div>
-
-      <div id="customersContent" style="margin-top:8px">
-        <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
-          <input type="file" id="custFile" accept=".xlsx,.xls" style="display:none">
-          <button id="importCustBtn" class="btn secondary small"><i data-feather="upload"></i> Import khách</button>
-          <button id="exportCustBtn" class="btn secondary small"><i data-feather="download"></i> Xuất khách</button>
-          <button id="exportCustPdfBtn" class="btn secondary small"><i data-feather="file-text"></i> Xuất PDF khách</button>
-        </div>
-        <div style="max-height:220px;overflow:auto">
-          <table id="customersTable"><thead><tr><th class="col-num">#</th><th>Tên</th><th>Địa chỉ</th><th>SĐT</th><th>Hành động</th></tr></thead><tbody></tbody></table>
-        </div>
-      </div>
-    </section>
-
-  </div>
-
-  <!-- Invoice modal -->
-  <div id="invoiceModal">
-    <div class="modal" role="dialog" aria-modal="true">
-      <div class="toolbar">
-        <input id="modalFilename" placeholder="Tên file hóa đơn (mặc định lấy từ trên)" style="padding:6px;border-radius:6px;border:1px solid #e6efe7;background:var(--input-bg);min-width:240px" />
-        <input id="logoFile" type="file" accept="image/*" style="display:none">
-        <input id="qrFile" type="file" accept="image/*" style="display:none">
-        <label style="display:flex;gap:6px;align-items:center">Logo W:<input id="logoWidth" type="number" min="20" max="200" value="70" style="width:80px;padding:6px;border-radius:6px;border:1px solid #e6efe7;background:var(--input-bg)"/></label>
-        <label style="display:flex;gap:6px;align-items:center">QR S:<input id="qrSize" type="number" min="24" max="200" value="64" style="width:80px;padding:6px;border-radius:6px;border:1px solid #e6efe7;background:var(--input-bg)"/></label>
-        <button id="uploadLogoBtn" class="btn small" title="Tải logo"><i data-feather="image"></i> Logo</button>
-        <button id="uploadQrBtn" class="btn small" title="Tải QR"><i data-feather="layout"></i> QR</button>
-        <button id="modalPrintBtn" class="btn small"><i data-feather="printer"></i> In</button>
-        <button id="modalPdfBtn" class="btn small"><i data-feather="download"></i> Tải PDF</button>
-        <button id="modalShareBtn" class="btn small"><i data-feather="share-2"></i> Chia sẻ</button>
-        <div style="flex:1"></div>
-        <button id="modalCloseBtn" class="btn secondary small">Đóng</button>
-      </div>
-      <div class="viewer" id="invoiceViewer" aria-live="polite"></div>
-    </div>
-  </div>
-
+<div class="wrap">
+<header>
+<div>
+<h1>Ứng dụng nhập liệu bán hàng -- Batches</h1>
+<div class="muted">Batch-based products &amp; orders -- Customers global</div>
+</div>
+<div style="display:flex;gap:8px;align-items:center">
+<select id="batchSelect" style="padding:6px;border-radius:6px;border:1px solid #e6efe7;background:var(--input-bg);min-width:200px"></select>
+<button class="btn small" id="newBatchBtn">New Batch</button>
+<button class="btn small" id="exportBatchBtn">Export Batch</button>
+<input accept=".json" id="importBatchFile" style="display:none" type="file"/>
+<button class="btn small" id="importBatchBtn">Import Batch</button>
+<input id="exportName" placeholder="Tên file khi xuất (tùy chọn)" style="padding:6px;border-radius:6px;border:1px solid #e6efe7;background:var(--input-bg);min-width:160px">
+<div class="actions">
+<button class="btn small" id="downloadAllBtn"><i data-feather="download"></i> Tải Excel</button>
+<button class="btn small" id="shareAllBtn"><i data-feather="share-2"></i> Chia sẻ</button>
+<button class="btn secondary small" id="saveBtn"><i data-feather="save"></i> Lưu</button>
+</div>
+</input></div>
+</header>
+<!-- Products -->
+<section class="card">
+<h3 style="margin:0 0 8px 0">1. Quản lý hàng hóa (Batch current)</h3>
+<table aria-label="Products" id="productsTable">
+<thead>
+<tr><th class="col-num">#</th><th>Tên hàng</th><th class="right">Nhập</th><th class="right">Đã bán</th><th class="right">Tồn</th><th class="right">Giá bán</th><th class="right">Hành động</th></tr>
+</thead>
+<tbody></tbody>
+</table>
+<div class="form-row" style="margin-top:10px">
+<input id="pName" placeholder="Tên hàng"/>
+<input id="pIn" min="0" placeholder="Số lượng nhập" type="number"/>
+<input id="pPrice" min="0" placeholder="Giá bán" type="number"/>
+<button class="btn small" id="addProdBtn"><i data-feather="plus"></i> Thêm</button>
+</div>
+</section>
+<!-- Orders entry -->
+<section class="card">
+<h3 style="margin:0 0 8px 0">2. Nhập đơn hàng</h3>
+<div class="form-row">
+<div style="position:relative;flex:1">
+<input id="orderCustomer" placeholder="Tên/địa chỉ/SĐT (gõ để tìm hoặc nhập mới)"/>
+<div class="ac-list hidden" id="custAc"></div>
+</div>
+</div>
+<div class="form-row" style="margin-top:8px">
+<input id="orderAddress" placeholder="Địa chỉ"/>
+<input id="orderPhone" placeholder="Số điện thoại"/>
+</div>
+<div id="orderItems" style="margin-top:8px">
+<table id="orderItemsTable">
+<thead><tr><th>Loại hàng</th><th style="width:110px">Số lượng</th><th style="width:110px">Giá bán (tại thời điểm lưu)</th><th style="width:60px">Xóa</th></tr></thead>
+<tbody></tbody>
+</table>
+</div>
+<div style="display:flex;gap:8px;margin-top:10px;align-items:center">
+<button class="btn small" id="addItemBtn"><i data-feather="plus"></i> Thêm dòng</button>
+<button class="btn small" id="saveOrderBtn"><i data-feather="save"></i> Lưu đơn</button>
+<button class="btn secondary small" id="applyPricesBtn" title="Áp dụng giá hiện tại cho tất cả đơn">Áp dụng giá hiện tại cho đơn</button>
+<button class="btn secondary small" id="prevOrderBtn" title="Khách trước"><i data-feather="chevron-left"></i></button>
+<button class="btn secondary small" id="nextOrderBtn" title="Khách sau"><i data-feather="chevron-right"></i></button>
+<div style="flex:1"></div>
+<div class="muted-small">Tổng đơn: <strong id="orderTotal">0</strong> đ</div>
+</div>
+</section>
+<!-- Orders list -->
+<section class="card">
+<h3 style="margin:0 0 8px 0">3. Danh sách đơn hàng (Batch current)</h3>
+<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px">
+<input class="order-filter" id="orderFilter" placeholder="Lọc đơn: tên/địa chỉ/sdt/tên hàng...">
+<button class="btn secondary small" id="clearFilterBtn">Xóa filter</button>
+<button class="btn secondary small" id="exportOrdersExcelBtn"><i data-feather="download"></i> Xuất Excel (Đơn)</button>
+<button class="btn secondary small" id="exportOrdersPdfBtn"><i data-feather="file-text"></i> Xuất PDF (Đơn)</button>
+<button class="btn small" id="exportInvoicesBtn"><i data-feather="printer"></i> Xem Hóa đơn (8/trang)</button>
+<div style="flex:1"></div>
+</input></div>
+<table id="ordersTable">
+<thead><tr><th class="col-num">#</th><th>Khách</th><th>Địa chỉ</th><th>Tất cả loại hàng (wrap)</th><th class="right">Tổng</th><th class="right">Hành động</th></tr></thead>
+<tbody></tbody>
+</table>
+<div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
+<div class="muted-small">Tổng tất cả: <strong id="grandTotal">0</strong> đ</div>
+<div class="actions">
+<button class="btn secondary small" id="clearAllBtn"><i data-feather="trash-2"></i> Xóa hết đơn</button>
+</div>
+</div>
+</section>
+<!-- Customers -->
+<section class="card">
+<div style="display:flex;justify-content:space-between;align-items:center">
+<h3 style="margin:0">4. Danh sách khách (Import/Export) -- chung</h3>
+<div style="display:flex;gap:8px;align-items:center">
+<button class="btn secondary small" id="toggleCustBtn"><i data-feather="eye-off"></i> Ẩn</button>
+</div>
+</div>
+<div id="customersContent" style="margin-top:8px">
+<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
+<input accept=".xlsx,.xls" id="custFile" style="display:none" type="file"/>
+<button class="btn secondary small" id="importCustBtn"><i data-feather="upload"></i> Import khách</button>
+<button class="btn secondary small" id="exportCustBtn"><i data-feather="download"></i> Xuất khách</button>
+<button class="btn secondary small" id="exportCustPdfBtn"><i data-feather="file-text"></i> Xuất PDF khách</button>
+</div>
+<div style="max-height:220px;overflow:auto">
+<table id="customersTable"><thead><tr><th class="col-num">#</th><th>Tên</th><th>Địa chỉ</th><th>SĐT</th><th>Hành động</th></tr></thead><tbody></tbody></table>
+</div>
+</div>
+</section>
+</div>
+<!-- Invoice modal -->
+<div id="invoiceModal">
+<div aria-modal="true" class="modal" role="dialog">
+<div class="toolbar">
+<input id="modalFilename" placeholder="Tên file hóa đơn (mặc định lấy từ trên)" style="padding:6px;border-radius:6px;border:1px solid #e6efe7;background:var(--input-bg);min-width:240px">
+<input accept="image/*" id="logoFile" style="display:none" type="file"/>
+<input accept="image/*" id="qrFile" style="display:none" type="file"/>
+<label style="display:flex;gap:6px;align-items:center">Logo W:<input id="logoWidth" max="200" min="20" style="width:80px;padding:6px;border-radius:6px;border:1px solid #e6efe7;background:var(--input-bg)" type="number" value="70"/></label>
+<label style="display:flex;gap:6px;align-items:center">QR S:<input id="qrSize" max="200" min="24" style="width:80px;padding:6px;border-radius:6px;border:1px solid #e6efe7;background:var(--input-bg)" type="number" value="64"/></label>
+<button class="btn small" id="uploadLogoBtn" title="Tải logo"><i data-feather="image"></i> Logo</button>
+<button class="btn small" id="uploadQrBtn" title="Tải QR"><i data-feather="layout"></i> QR</button>
+<button class="btn small" id="modalPrintBtn"><i data-feather="printer"></i> In</button>
+<button class="btn small" id="modalPdfBtn"><i data-feather="download"></i> Tải PDF</button>
+<button class="btn small" id="modalShareBtn"><i data-feather="share-2"></i> Chia sẻ</button>
+<div style="flex:1"></div>
+<button class="btn secondary small" id="modalCloseBtn">Đóng</button>
+</input></div>
+<div aria-live="polite" class="viewer" id="invoiceViewer"></div>
+</div>
+</div>
 <script>
 /* ---------- init icons ---------- */
 document.addEventListener('DOMContentLoaded', ()=>{ if(window.feather) feather.replace(); });
@@ -1263,5 +1250,45 @@ window._gsLoadAll = gsLoadAll;
 window._saveLocal = saveLocal;
 window._loadFromPreferred = loadFromPreferred;
 </script>
-</body>
+<script>
+const scriptURL = "https://script.google.com/macros/s/AKfycbzW8T_CJZymccBBSklCU3yTLN6rP19fPZv6rkpHsePdbaBD3OHkjcH84nR0oCvgMNw/exec";
+
+function saveOrder() {
+  const data = {
+    action: "saveAll",
+    data: {
+      customerName: "Khách A",
+      product: "Sản phẩm A",
+      quantity: 10
+    }
+  };
+
+  fetch(scriptURL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(data)
+  })
+  .then(response => response.json())
+  .then(result => {
+    alert("✅ Đã lưu đơn hàng!");
+    console.log(result);
+  })
+  .catch(error => {
+    alert("❌ Lỗi khi lưu đơn hàng.");
+    console.error("Lỗi:", error);
+  });
+}
+
+// Gắn vào nút "Lưu đơn" nếu có
+document.querySelectorAll("button").forEach(btn => {
+  if (btn.textContent.includes("Lưu đơn")) {
+    btn.addEventListener("click", function(e) {
+      e.preventDefault();
+      saveOrder();
+    });
+  }
+});
+</script></body>
 </html>
