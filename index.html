@@ -8,7 +8,7 @@
 
   <meta name="viewport" content="width=device-width,initial-scale=1" />
 
-  <title>OrderGo - Nhập liệu bán hàng</title>
+  <title>OrderGo - Nhập liệu bán hàng (v2)</title>
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css" />
 
@@ -107,6 +107,8 @@
       <div id="itemsContainer" style="margin-top:8px"></div>
       <div class="row" style="margin-top:8px">
         <div style="width:160px"><button id="btnAddItem" class="btn small">Thêm hàng</button></div>
+        <div style="width:160px"><button id="btnCustomerFirst" class="btn small ghost">Khách trước</button></div>
+        <div style="width:160px"><button id="btnCustomerNext" class="btn small ghost">Khách sau</button></div>
         <div class="right" style="width:220px">
           <div class="row"><div class="col small muted">Tổng tiền đơn:</div><div id="orderTotal" class="badge">0</div></div>
         </div>
@@ -143,7 +145,7 @@
       <div style="margin-top:10px"><small class="muted">(Import cập nhật local & sẽ gửi lên Google Sheets khi bạn bấm Lưu)</small></div>
     </div>
 
-    <div class="footer-note">Nấm lùn- 0346722755 - EcoXuan</div>
+    <div class="footer-note">Nấm lùn- 0388722491 - Eco Xuân</div>
   </div>
 
   <!-- feather icons (stable CDN) and helpers -->
@@ -168,7 +170,6 @@
     let customers = [];
     let currentBatchId = null;
     let currentCustomerIndex = -1; // for prev/next nav
-    let currentOrderCustomerIndex = -1; // for prev/next within orders
     const LS_KEY = 'ordergo_v2_data';
 
     // ---------- persistence ----------
@@ -213,10 +214,7 @@
           <td>
             <button class="icon-btn" data-action="edit-order" data-idx="${idx}" title="Edit" aria-label="Edit"><i data-feather="edit-2"></i></button>
             <button class="icon-btn" data-action="del-order" data-idx="${idx}" title="Xóa" aria-label="Xóa"><i data-feather="trash-2"></i></button>
-          </td>`; tb.appendChild(tr); }); $('grandTotal').textContent = fmtCurrency(grand);
-      currentOrderCustomerIndex = -1;
-      ensureIcons();
-    }
+          </td>`; tb.appendChild(tr); }); $('grandTotal').textContent = fmtCurrency(grand); ensureIcons(); }
 
     // ---------- items (order lines) ----------
     const itemsContainer = $('itemsContainer'); function itemsContainerClear(){ itemsContainer.innerHTML=''; }
@@ -296,31 +294,9 @@
 
       const cs = $('customerSearch'); if(cs){ cs.addEventListener('input',(ev)=>{ const q = ev.target.value.toLowerCase(); const found = customers.filter(c => (c.name||'').toLowerCase().includes(q) || (c.phone||'').toLowerCase().includes(q)); if(found.length){ const c = found[0]; $('orderCustomer').value = c.name; $('orderAddress').value = c.address; $('orderPhone').value = c.phone; currentCustomerIndex = customers.findIndex(cc => lcName(cc.name) === lcName(c.name)); } }); }
 
-      // ---------- order-based customer navigation (prev/next through customers present in current batch's orders) ----------
-      function getOrderCustomers(){
-        const b = getCurrentBatch();
-        if(!b || !Array.isArray(b.orders) || b.orders.length === 0) return [];
-        const map = new Map();
-        b.orders.forEach(o => {
-          const key = lcName(o.customer || '');
-          if(!key) return;
-          if(!map.has(key)) map.set(key, { name: o.customer, address: o.address || '', phone: o.phone || '' });
-        });
-        return Array.from(map.values());
-      }
+      $('btnCustomerFirst').addEventListener('click', ()=>{ if(customers.length===0) return; currentCustomerIndex = currentCustomerIndex <= 0 ? 0 : currentCustomerIndex-1; const c = customers[currentCustomerIndex]; if(c){ $('orderCustomer').value=c.name; $('orderAddress').value=c.address; $('orderPhone').value=c.phone; } });
 
-      if(list.length === 0){ alert('Danh sách đơn hiện tại chưa có khách nào'); return; }
-        if(currentOrderCustomerIndex <= 0) currentOrderCustomerIndex = 0; else currentOrderCustomerIndex = currentOrderCustomerIndex - 1;
-        const c = list[currentOrderCustomerIndex] || list[0];
-        if(c){ $('orderCustomer').value = c.name; $('orderAddress').value = c.address; $('orderPhone').value = c.phone; }
-      });
-
-      if(list.length === 0){ alert('Danh sách đơn hiện tại chưa có khách nào'); return; }
-        if(currentOrderCustomerIndex < 0) currentOrderCustomerIndex = 0;
-        currentOrderCustomerIndex = Math.min(list.length - 1, currentOrderCustomerIndex + 1);
-        const c = list[currentOrderCustomerIndex];
-        if(c){ $('orderCustomer').value = c.name; $('orderAddress').value = c.address; $('orderPhone').value = c.phone; }
-      });
+      $('btnCustomerNext').addEventListener('click', ()=>{ if(customers.length===0) return; currentCustomerIndex = currentCustomerIndex >= customers.length-1 ? customers.length-1 : currentCustomerIndex+1; const c = customers[currentCustomerIndex]; if(c){ $('orderCustomer').value=c.name; $('orderAddress').value=c.address; $('orderPhone').value=c.phone; } });
 
       $('btnDeleteBatch').addEventListener('click', ()=>{ if(!currentBatchId){ alert('Không có batch nào để xóa'); return; } deleteBatch(currentBatchId); });
 
