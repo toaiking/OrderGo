@@ -1,2 +1,2 @@
 # OrderGo
-Add order google sheet
+Form html to google sheet
