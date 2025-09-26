@@ -409,12 +409,13 @@
     const payloadObj = { batches, customers, currentBatchId };
     const params = new URLSearchParams();
     params.append('action', 'saveAll');
-    params.append('data', JSON.stringify({ data: payloadObj })); // note: doPost expects payload.data
+    // gửi data là JSON string (doPost sẽ parse payload.data)
+    params.append('data', JSON.stringify({ data: payloadObj }));
 
     const resp = await fetch(GS_URL, {
       method: 'POST',
-      body: params, // Content-Type: application/x-www-form-urlencoded; charset=UTF-8 (browser set automatically)
-      // IMPORTANT: do NOT set custom headers (avoid preflight)
+      body: params
+      // KHÔNG đặt headers (để tránh preflight)
     });
 
     const text = await resp.text();
@@ -435,6 +436,7 @@
     return false;
   }
 }
+
 
 
     async function gsLoadAll(){
@@ -586,4 +588,5 @@
   </script>
 </body>
 </html>
+
 
