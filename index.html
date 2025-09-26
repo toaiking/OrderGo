@@ -63,8 +63,8 @@
     <div class="card">
       <header>
         <div>
-          <h1>OrderGo – Nhập liệu bán hàng (v2)</h1>
-          <div class="notice">Giao diện: nhẹ nhàng, nền xanh nhạt. Host trên GitHub Pages — kết nối Google Sheets qua Web App.</div>
+          <h1>OrderGo – Nhập liệu bán hàng</h1>
+          <div class="notice"></div>
         </div>
         <div class="controls">
           <button id="btnNewBatch" class="btn small important" title="Tạo mã đơn tổng"><i data-feather="plus"></i> Tạo mã</button>
@@ -103,10 +103,10 @@
       </div>
       <datalist id="customersDatalist"></datalist>
 
-      <div style="margin-top:8px">Danh sách mặt hàng (một khách có thể đặt nhiều loại). Mặc định có 2 dòng để nhập, bạn có thể thêm bớt.</div>
+      <div style="margin-top:8px"></div>
       <div id="itemsContainer" style="margin-top:8px"></div>
       <div class="row" style="margin-top:8px">
-        <div style="width:160px"><button id="btnAddItem" class="btn small">Thêm hàng</button></div>
+        <div style="width:160px"><button id="btnAddItem" class="btn secondary small"><i data-feather="file"></i> Thêm hàng</button></div>
         <div style="width:160px"><button id="btnCustomerFirst" class="btn small ghost">Khách trước</button></div>
         <div style="width:160px"><button id="btnCustomerNext" class="btn small ghost">Khách sau</button></div>
         <div class="right" style="width:220px">
@@ -133,7 +133,7 @@
       <div style="display:flex;align-items:center;gap:12px">
         <h3 style="margin:0">Danh sách khách hàng (gợi ý)</h3>
         <button id="toggleCustomers" class="btn icon-only secondary" style="margin-left:8px" title="Hiện/Ẩn"><i data-feather="chevron-down"></i></button>
-        <div class="right small muted">Kéo để xem khi danh sách dài</div>
+        <div class="right small muted"></div>
       </div>
 
       <div style="margin-top:8px; display:flex; gap:8px; align-items:center;">
@@ -142,10 +142,10 @@
       </div>
 
       <div id="customersPanel" class="customers-panel" style="margin-top:8px"></div>
-      <div style="margin-top:10px"><small class="muted">(Import cập nhật local & sẽ gửi lên Google Sheets khi bạn bấm Lưu)</small></div>
+      <div style="margin-top:10px"><small class="muted"></small></div>
     </div>
 
-    <div class="footer-note">Lưu ý: Trang này lưu local (localStorage) và cố gắng sync lên Google Sheets nếu bạn đặt <code>GS_URL</code> ở cấu hình.</div>
+    <div class="footer-note">Nấm lùn-0388722491-EcoXuan</div>
   </div>
 
   <!-- feather icons (stable CDN) and helpers -->
@@ -322,3 +322,4 @@
 </body>
 
 </html>
+
