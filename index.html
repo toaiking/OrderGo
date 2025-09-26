@@ -1,18 +1,10 @@
-
 <!doctype html>
-
 <html lang="vi">
-
 <head>
-
   <meta charset="utf-8" />
-
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-
   <title>OrderGo - Nhập liệu bán hàng (v2)</title>
-
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css" />
-
   <style>
     :root{ --bg:#eaf6f3; --card:#ffffff; --accent:#2f9e8f; --accent-2:#1f7a6f; --muted:#6b7280; --danger:#e55353;
       --radius:12px; --pad:12px; font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; }
@@ -56,9 +48,7 @@
 
     @media (max-width:900px){ .row{flex-direction:column} .controls{flex-direction:column; align-items:flex-end} }
   </style>
-
 </head>
-
 <body>
   <div class="wrap">
     <div class="card">
@@ -255,8 +245,7 @@
           const remoteCust = remote.customers || [];
           const merged = [];
           const map = {};
-          remoteCust.concat(customers).forEach(c=>{ const key = lcName(c.name); if(!map[key]){ map[key] = { name: c.name, address: c.address || '', phone: c.phone || '' }; } else { // if exists keep earlier (remote came first)
-            if(c.address) map[key].address = c.address; if(c.phone) map[key].phone = c.phone; } });
+          remoteCust.concat(customers).forEach(c=>{ const key = lcName(c.name); if(!map[key]){ map[key] = { name: c.name, address: c.address || '', phone: c.phone || '' }; } else { if(c.address) map[key].address = c.address; if(c.phone) map[key].phone = c.phone; } });
           for(const k in map) merged.push(map[k]); customers = merged;
           currentBatchId = remote.currentBatchId || (batches[0] && batches[0].id) || currentBatchId;
           persistAll(); renderAll(); return true; } return false; } catch(err){ console.error('gsLoadAll error', err); return false; } }
@@ -274,19 +263,7 @@
       const orderTbody = document.querySelector('#tblOrders tbody'); if(orderTbody && !orderTbody._hasDelegation){ orderTbody.addEventListener('click', function(e){ const btn = e.target.closest('button[data-action]'); if(!btn) return; const action = btn.getAttribute('data-action'); const idx = Number(btn.dataset.idx); if(action === 'del-order'){ if(confirm('Xóa đơn này?')){ const b = getCurrentBatch(); if(!b) return; b.orders.splice(idx,1); persistAll(); renderOrders(); renderProducts(); } } else if(action === 'edit-order'){ editOrder(idx); } }); orderTbody._hasDelegation = true; } }
 
     // ---------- export functions (defined to avoid undefined errors) ----------
-    function exportExcel(){ // export customers + batches summary
-      try{
-        const wb = XLSX.utils.book_new();
-        // customers sheet
-        const custRows = [['Tên','Địa chỉ','SĐT']].concat(customers.map(c=>[c.name,c.address,c.phone]));
-        const wsC = XLSX.utils.aoa_to_sheet(custRows); XLSX.utils.book_append_sheet(wb, wsC, 'Customers');
-        // batches summary
-        const batRows = [['Batch','#Products','#Orders','Total']];
-        batches.forEach(b=>{ const total = (b.orders||[]).reduce((s,o)=>s + Number(o.total||0),0); batRows.push([b.name, (b.products||[]).length, (b.orders||[]).length, total]); });
-        const wsB = XLSX.utils.aoa_to_sheet(batRows); XLSX.utils.book_append_sheet(wb, wsB, 'Batches');
-        XLSX.writeFile(wb, `ordergo_export_${new Date().toISOString().slice(0,10)}.xlsx`);
-      } catch(e){ console.error(e); alert('Lỗi khi xuất Excel.'); }
-    }
+    function exportExcel(){ try{ const wb = XLSX.utils.book_new(); const custRows = [['Tên','Địa chỉ','SĐT']].concat(customers.map(c=>[c.name,c.address,c.phone])); const wsC = XLSX.utils.aoa_to_sheet(custRows); XLSX.utils.book_append_sheet(wb, wsC, 'Customers'); const batRows = [['Batch','#Products','#Orders','Total']]; batches.forEach(b=>{ const total = (b.orders||[]).reduce((s,o)=>s + Number(o.total||0),0); batRows.push([b.name, (b.products||[]).length, (b.orders||[]).length, total]); }); const wsB = XLSX.utils.aoa_to_sheet(batRows); XLSX.utils.book_append_sheet(wb, wsB, 'Batches'); XLSX.writeFile(wb, `ordergo_export_${new Date().toISOString().slice(0,10)}.xlsx`); } catch(e){ console.error(e); alert('Lỗi khi xuất Excel.'); } }
 
     async function exportPDF(){ try{ const el = document.querySelector('#tblOrders'); if(!el){ alert('Không có nội dung để in'); return; } const canvas = await html2canvas(el, { scale:2 }); const img = canvas.toDataURL('image/png'); const { jsPDF } = window.jspdf; const pdf = new jsPDF('p','mm','a4'); const pageWidth = pdf.internal.pageSize.getWidth(); const pageHeight = pdf.internal.pageSize.getHeight(); const imgProps = pdf.getImageProperties(img); const pdfHeight = (imgProps.height * pageWidth) / imgProps.width; pdf.addImage(img, 'PNG', 0, 0, pageWidth, pdfHeight); pdf.save(`orders_${new Date().toISOString().slice(0,10)}.pdf`); } catch(e){ console.error(e); alert('Lỗi khi xuất PDF'); } }
 
@@ -306,20 +283,35 @@
     // ---------- renderAll and init ----------
     function renderAll(){ renderBatchList(); renderProducts(); renderOrders(); renderCustomersPanel(); updateCustomersDatalist(); ensureIcons(); }
 
-    // initial load
-    loadLocal();
-    if(!batches.length){ const id = uid('batch'); batches.push({ id, name: new Date().toISOString().slice(0,10).replace(/-/g,''), products: [], orders: [] }); currentBatchId = id; persistAll(); }
+    // ---------- Async init: load remote first (if configured), then local fallback ----------
+    async function initApp(){
+      loadLocal();
+      if(USE_REMOTE){
+        try{
+          const ok = await gsLoadAll();
+          if(!ok) console.warn('Không load được remote');
+          else console.log('Loaded remote data');
+        } catch(e){ console.warn('gsLoadAll failed', e); }
+      }
 
-    itemsContainerClear(); addItemRow('',1); addItemRow('',1);
-    attachHandlers(); renderAll(); ensureIcons();
+      // ensure there is at least one batch
+      if(!batches || batches.length === 0){
+        const id = uid('batch');
+        batches.push({ id, name: new Date().toISOString().slice(0,10).replace(/-/g,''), products: [], orders: [] });
+        currentBatchId = id;
+        persistAll();
+      }
 
-    if(USE_REMOTE){ gsLoadAll().then(ok=>{ if(!ok) console.warn('Không load được remote'); else console.log('Loaded remote data'); }); }
+      itemsContainerClear(); addItemRow('',1); addItemRow('',1);
+      attachHandlers(); renderAll(); ensureIcons();
+    }
+
+    // start app
+    initApp();
 
     // expose for debugging
     window.ordergo = { batches, customers, persistAll, gsSaveAll, gsLoadAll };
 
   </script>
-
 </body>
-
 </html>
