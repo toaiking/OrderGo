@@ -257,7 +257,15 @@
       $('grandTotal').textContent = fmtCurrency(grand);
       ensureIcons();
     }
-
+    // ---------- renderAll (tổng hợp) ----------
+function renderAll(){
+  renderBatchList();
+  renderProducts();
+  renderOrders();
+  renderCustomersPanel();
+  updateCustomersDatalist();
+  ensureIcons();
+}
     // ---------- items (order lines) ----------
     const itemsContainer = $('itemsContainer');
     function itemsContainerClear(){ itemsContainer.innerHTML = ''; }
@@ -687,3 +695,4 @@
   </script>
 </body>
 </html>
+
