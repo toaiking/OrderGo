@@ -106,13 +106,12 @@
       <div style="margin-top:8px"></div>
       <div id="itemsContainer" style="margin-top:8px"></div>
       <div class="row" style="margin-top:8px">
-        <div style="width:160px"><button id="btnAddItem" class="btn secondary small"><i data-feather="plus"></i> Thêm hàng</button></div>
-        
+        <div style="width:160px"><button id="btnAddItem" class="btn small">Thêm hàng</button></div>
         <div class="right" style="width:220px">
           <div class="row"><div class="col small muted">Tổng tiền đơn:</div><div id="orderTotal" class="badge">0</div></div>
         </div>
       </div>
-      <div style="margin-top:10px"><button id="btnAddOrder" class="btn">Thêm đơn><i data-feather="chevron-right"></button></div>
+      <div style="margin-top:10px"><button id="btnAddOrder" class="btn">Thêm đơn</button></div>
     </div>
 
     <div class="card">
@@ -141,10 +140,10 @@
       </div>
 
       <div id="customersPanel" class="customers-panel" style="margin-top:8px"></div>
-      <div style="margin-top:10px"><small class="muted"></small></div>
+      <div style="margin-top:10px"><small class="muted">(Import cập nhật local & sẽ gửi lên Google Sheets khi bạn bấm Lưu)</small></div>
     </div>
 
-    <div class="footer-note">Nấm lùn-0388722491-EcoXuan</div>
+    <div class="footer-note">Nấm lùn- 0346722755 - EcoXuan</div>
   </div>
 
   <!-- feather icons (stable CDN) and helpers -->
@@ -155,7 +154,7 @@
 
   <script>
     // ---------- CONFIG ----------
-    const GS_URL = 'https://script.google.com/macros/s/AKfycbyxc0CnSilMc6zab1kVj6DpUuFHDTLADzCd4NPCaOjVAHIrGwpmum503CpUY3bx8_6W/exec'; // <-- dán Web App URL của bạn nếu muốn sync tự động
+    const GS_URL = 'https://script.google.com/macros/s/AKfycbz-1WXX8s2HEtYaNu11HR8S8pUzSgkb5nHq8KWMm-xoLfCmIssBsWQhIo-qjM03FbZK/exec'; // <-- dán Web App URL của bạn nếu muốn sync tự động
     const USE_REMOTE = GS_URL && GS_URL.includes('script.google.com');
 
     // ---------- utils ----------
@@ -169,6 +168,7 @@
     let customers = [];
     let currentBatchId = null;
     let currentCustomerIndex = -1; // for prev/next nav
+    let currentOrderCustomerIndex = -1; // for prev/next within orders
     const LS_KEY = 'ordergo_v2_data';
 
     // ---------- persistence ----------
@@ -213,7 +213,10 @@
           <td>
             <button class="icon-btn" data-action="edit-order" data-idx="${idx}" title="Edit" aria-label="Edit"><i data-feather="edit-2"></i></button>
             <button class="icon-btn" data-action="del-order" data-idx="${idx}" title="Xóa" aria-label="Xóa"><i data-feather="trash-2"></i></button>
-          </td>`; tb.appendChild(tr); }); $('grandTotal').textContent = fmtCurrency(grand); ensureIcons(); }
+          </td>`; tb.appendChild(tr); }); $('grandTotal').textContent = fmtCurrency(grand);
+      currentOrderCustomerIndex = -1;
+      ensureIcons();
+    }
 
     // ---------- items (order lines) ----------
     const itemsContainer = $('itemsContainer'); function itemsContainerClear(){ itemsContainer.innerHTML=''; }
@@ -293,9 +296,31 @@
 
       const cs = $('customerSearch'); if(cs){ cs.addEventListener('input',(ev)=>{ const q = ev.target.value.toLowerCase(); const found = customers.filter(c => (c.name||'').toLowerCase().includes(q) || (c.phone||'').toLowerCase().includes(q)); if(found.length){ const c = found[0]; $('orderCustomer').value = c.name; $('orderAddress').value = c.address; $('orderPhone').value = c.phone; currentCustomerIndex = customers.findIndex(cc => lcName(cc.name) === lcName(c.name)); } }); }
 
-      $('btnCustomerFirst').addEventListener('click', ()=>{ if(customers.length===0) return; currentCustomerIndex = currentCustomerIndex <= 0 ? 0 : currentCustomerIndex-1; const c = customers[currentCustomerIndex]; if(c){ $('orderCustomer').value=c.name; $('orderAddress').value=c.address; $('orderPhone').value=c.phone; } });
+      // ---------- order-based customer navigation (prev/next through customers present in current batch's orders) ----------
+      function getOrderCustomers(){
+        const b = getCurrentBatch();
+        if(!b || !Array.isArray(b.orders) || b.orders.length === 0) return [];
+        const map = new Map();
+        b.orders.forEach(o => {
+          const key = lcName(o.customer || '');
+          if(!key) return;
+          if(!map.has(key)) map.set(key, { name: o.customer, address: o.address || '', phone: o.phone || '' });
+        });
+        return Array.from(map.values());
+      }
 
-      $('btnCustomerNext').addEventListener('click', ()=>{ if(customers.length===0) return; currentCustomerIndex = currentCustomerIndex >= customers.length-1 ? customers.length-1 : currentCustomerIndex+1; const c = customers[currentCustomerIndex]; if(c){ $('orderCustomer').value=c.name; $('orderAddress').value=c.address; $('orderPhone').value=c.phone; } });
+      if(list.length === 0){ alert('Danh sách đơn hiện tại chưa có khách nào'); return; }
+        if(currentOrderCustomerIndex <= 0) currentOrderCustomerIndex = 0; else currentOrderCustomerIndex = currentOrderCustomerIndex - 1;
+        const c = list[currentOrderCustomerIndex] || list[0];
+        if(c){ $('orderCustomer').value = c.name; $('orderAddress').value = c.address; $('orderPhone').value = c.phone; }
+      });
+
+      if(list.length === 0){ alert('Danh sách đơn hiện tại chưa có khách nào'); return; }
+        if(currentOrderCustomerIndex < 0) currentOrderCustomerIndex = 0;
+        currentOrderCustomerIndex = Math.min(list.length - 1, currentOrderCustomerIndex + 1);
+        const c = list[currentOrderCustomerIndex];
+        if(c){ $('orderCustomer').value = c.name; $('orderAddress').value = c.address; $('orderPhone').value = c.phone; }
+      });
 
       $('btnDeleteBatch').addEventListener('click', ()=>{ if(!currentBatchId){ alert('Không có batch nào để xóa'); return; } deleteBatch(currentBatchId); });
 
@@ -321,7 +346,3 @@
 </body>
 
 </html>
-
-
-
-
