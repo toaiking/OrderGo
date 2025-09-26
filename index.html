@@ -1,27 +1,29 @@
 <!doctype html>
-
 <html lang="vi">
-
 <head>
-
   <meta charset="utf-8" />
-
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-
   <title>OrderGo - Nhập liệu bán hàng (v2)</title>
-
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css" />
-
   <style>
-    :root{ --bg:#eaf6f3; --card:#ffffff; --accent:#2f9e8f; --accent-2:#1f7a6f; --muted:#6b7280; --danger:#e55353;
-      --radius:12px; --pad:12px; font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; }
-
-    body{background:var(--bg); padding:20px;}
-    .wrap{max-width:1200px; margin:0 auto;}
-    .card{background:var(--card); border-radius:var(--radius); box-shadow:0 8px 30px rgba(23,43,77,0.06); padding:16px; margin-bottom:16px}
-    header{display:flex; gap:12px; align-items:center; justify-content:space-between}
-    h1{font-size:20px; margin:0}
+    :root{
+      --bg:#eaf6f3; --card:#ffffff; --accent:#2f9e8f; --accent-2:#1f7a6f; --muted:#6b7280; --danger:#e55353;
+      --radius:12px; --pad:12px; font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+    body{background:var(--bg); padding:18px; margin:0; color:#0f172a;}
+    .container{max-width:1200px; margin:0 auto; padding:12px;}
+    .header-card{background:var(--card); border-radius:12px; padding:12px 16px; display:flex; align-items:center; justify-content:space-between; box-shadow:0 8px 30px rgba(23,43,77,0.06); margin-bottom:12px}
+    h1{font-size:18px; margin:0}
     .controls{display:flex; gap:8px; align-items:center}
+    /* Layout grid */
+    .main-grid{display:grid; gap:12px; grid-template-columns: 1fr; align-items:start;}
+    .card{background:var(--card); border-radius:var(--radius); box-shadow:0 8px 30px rgba(23,43,77,0.06); padding:12px;}
+    /* On wide screens: two-column layout */
+    @media(min-width:1000px){
+      .main-grid{grid-template-columns: 1fr 420px;}
+      .left-col{display:grid; gap:12px;}
+      .right-col{display:grid; gap:12px;}
+    }
 
     /* Buttons */
     .btn{display:inline-flex; gap:8px; align-items:center; justify-content:center; background:var(--accent); color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer; font-weight:600}
@@ -31,124 +33,125 @@
     .btn.ghost{background:transparent; color:var(--muted); border:1px solid rgba(0,0,0,0.04)}
     .btn.important{box-shadow:0 6px 18px rgba(47,158,143,0.12); border-radius:12px}
     .btn.danger{background:var(--danger)}
-
+    .muted{color:var(--muted)}
     input[type=text], input[type=date], input[type=number], select, textarea { padding:8px; border-radius:8px; border:1px solid #e6eef0; width:100%; box-sizing:border-box }
     .row{display:flex; gap:12px}
     .col{flex:1}
     table{width:100%; border-collapse:collapse}
     th, td{padding:8px; border-bottom:1px solid #f1f6f5; text-align:left; vertical-align:top}
     th{background:transparent; color:var(--muted); font-weight:600}
-    small.muted{color:var(--muted)}
     .badge{background:#eef9f7; color:var(--accent); padding:6px 10px; border-radius:999px}
+    .customers-panel{border-radius:8px; border:1px solid #e6eef0; padding:8px; max-height:300px; overflow:auto; background:#fff}
+    .customer-row{padding:8px; border-bottom:1px solid #f3f7f6; display:flex; align-items:center; justify-content:space-between}
+    .customer-row:last-child{border-bottom:none}
     .notice{font-size:13px; color:#334155}
-    .icon-btn{background:transparent; border:0; cursor:pointer; padding:6px}
     .right{margin-left:auto}
     .wrap-text{white-space:pre-wrap; word-break:break-word}
     .small{font-size:13px}
-    .muted{color:var(--muted)}
-    .footer-note{font-size:13px; color:#475569}
-
-    .customers-panel{border-radius:8px; border:1px solid #e6eef0; padding:8px; max-height:220px; overflow:auto; background:#fff}
-    .customer-row{padding:8px; border-bottom:1px solid #f3f7f6; display:flex; align-items:center; justify-content:space-between}
-    .customer-row:last-child{border-bottom:none}
-    .collapsed{display:none}
-
-    @media (max-width:900px){ .row{flex-direction:column} .controls{flex-direction:column; align-items:flex-end} }
+    .footer-note{font-size:13px; color:#475569; margin-top:8px}
+    /* Button emphasis for add/update */
+    .btn.update{background:#1f7a6f}
   </style>
-
 </head>
-
 <body>
-  <div class="wrap">
-    <div class="card">
-      <header>
-        <div>
-          <h1>OrderGo – Nhập liệu bán hàng</h1>
-          <div class="notice"></div>
-        </div>
-        <div class="controls">
-          <button id="btnNewBatch" class="btn small important" title="Tạo mã đơn tổng"><i data-feather="plus"></i> Tạo mã</button>
-          <select id="selBatches" style="min-width:260px"></select>
-          <button id="btnDeleteBatch" class="btn small danger" title="Xóa mã đang chọn"><i data-feather="trash-2"></i></button>
-          <button id="btnSave" class="btn small" title="Lưu local & gửi lên Google Sheets"><i data-feather="save"></i> <span id="saveLabel">Lưu</span></button>
-          <button class="btn secondary small" id="btnExportExcel"><i data-feather="file"></i> Excel</button>
-          <button class="btn secondary small" id="btnExportPDF"><i data-feather="file-text"></i> PDF</button>
-        </div>
-      </header>
+  <div class="container">
+    <div class="header-card">
+      <div>
+        <h1>OrderGo – Nhập liệu bán hàng</h1>
+        <div class="notice">Giao diện responsive (desktop/tablet). Dữ liệu sẽ load từ Google Sheets nếu cấu hình GS_URL đúng.</div>
+      </div>
+      <div class="controls">
+        <button id="btnNewBatch" class="btn small important" title="Tạo mã đơn tổng"><i data-feather="plus"></i> Tạo mã</button>
+        <select id="selBatches" style="min-width:220px"></select>
+        <button id="btnDeleteBatch" class="btn small danger" title="Xóa mã đang chọn"><i data-feather="trash-2"></i></button>
+        <button id="btnSave" class="btn small" title="Lưu local & gửi lên Google Sheets"><i data-feather="save"></i> <span id="saveLabel">Lưu</span></button>
+        <button class="btn secondary small" id="btnExportExcel"><i data-feather="file"></i> Excel</button>
+        <button class="btn secondary small" id="btnExportPDF"><i data-feather="file-text"></i> PDF</button>
+      </div>
     </div>
 
-    <div class="card" id="cardProducts">
-      <h3>Bảng danh sách hàng hóa</h3>
-      <div style="margin-bottom:10px" class="row">
-        <div style="width:260px"><input type="text" id="prodName" placeholder="Tên hàng" /></div>
-        <div style="width:130px"><input type="number" id="prodIn" placeholder="Nhập" min="0" /></div>
-        <div style="width:160px"><input type="number" id="prodPrice" placeholder="Giá bán (VND)" min="0" /></div>
-        <div style="display:flex; align-items:center"><button id="btnAddProd" class="btn small">Thêm</button></div>
-      </div>
+    <div class="main-grid">
+      <!-- Left column: products + orders list -->
+      <div class="left-col">
+        <div class="card" id="cardProducts">
+          <h3>Bảng danh sách hàng hóa</h3>
+          <div style="margin-bottom:10px" class="row">
+            <div style="width:260px"><input type="text" id="prodName" placeholder="Tên hàng" /></div>
+            <div style="width:130px"><input type="number" id="prodIn" placeholder="Nhập" min="0" /></div>
+            <div style="width:160px"><input type="number" id="prodPrice" placeholder="Giá bán (VND)" min="0" /></div>
+            <div style="display:flex; align-items:center"><button id="btnAddProd" class="btn small secondary"><i data-feather="plus"></i> Thêm</button></div>
+          </div>
+          <table id="tblProducts">
+            <thead>
+              <tr><th>Tên hàng</th><th>Nhập</th><th>Đã bán</th><th>Tồn</th><th>Giá bán (VND)</th><th>Action</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
 
-      <table id="tblProducts">
-        <thead>
-          <tr><th>Tên hàng</th><th>Nhập</th><th>Đã bán</th><th>Tồn</th><th>Giá bán (VND)</th><th>Action</th></tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
-
-    <div class="card" id="cardOrders">
-      <h3>Bảng nhập đơn đặt hàng</h3>
-      <div class="row">
-        <div class="col"><input list="customersDatalist" type="text" id="orderCustomer" placeholder="Khách hàng" autocomplete="off"/></div>
-        <div class="col"><input type="text" id="orderAddress" placeholder="Địa chỉ" /></div>
-        <div style="width:160px"><input type="text" id="orderPhone" placeholder="SĐT" /></div>
-      </div>
-      <datalist id="customersDatalist"></datalist>
-
-      <div style="margin-top:8px"></div>
-      <div id="itemsContainer" style="margin-top:8px"></div>
-      <div class="row" style="margin-top:8px">
-        <div style="width:160px"><button id="btnAddItem" class="btn small">Thêm hàng</button></div>
-        <div style="width:160px"><button id="btnCustomerFirst" class="btn small ghost">Khách trước</button></div>
-        <div style="width:160px"><button id="btnCustomerNext" class="btn small ghost">Khách sau</button></div>
-        <div class="right" style="width:220px">
-          <div class="row"><div class="col small muted">Tổng tiền đơn:</div><div id="orderTotal" class="badge">0</div></div>
+        <div class="card">
+          <h3>Bảng danh sách đơn</h3>
+          <table id="tblOrders">
+            <thead>
+              <tr><th>STT</th><th>Khách hàng</th><th>Địa chỉ / SĐT</th><th>Danh sách đơn</th><th>Tổng tiền</th><th>Action</th></tr>
+            </thead>
+            <tbody></tbody>
+            <tfoot>
+              <tr><td colspan="4" class="right small muted">Tổng cả mã đơn:</td><td id="grandTotal">0</td><td></td></tr>
+            </tfoot>
+          </table>
         </div>
       </div>
-      <div style="margin-top:10px"><button id="btnAddOrder" class="btn">Thêm đơn</button></div>
-    </div>
 
-    <div class="card">
-      <h3>Bảng danh sách đơn</h3>
-      <table id="tblOrders">
-        <thead>
-          <tr><th>STT</th><th>Khách hàng</th><th>Địa chỉ / SĐT</th><th>Danh sách đơn</th><th>Tổng tiền</th><th>Action</th></tr>
-        </thead>
-        <tbody></tbody>
-        <tfoot>
-          <tr><td colspan="4" class="right small muted">Tổng cả mã đơn:</td><td id="grandTotal">0</td><td></td></tr>
-        </tfoot>
-      </table>
-    </div>
+      <!-- Right column: order input + customers -->
+      <div class="right-col">
+        <div class="card" id="cardOrders">
+          <h3>Bảng nhập đơn đặt hàng</h3>
+          <div class="row">
+            <div class="col"><input list="customersDatalist" type="text" id="orderCustomer" placeholder="Khách hàng" autocomplete="off"/></div>
+            <div class="col"><input type="text" id="orderAddress" placeholder="Địa chỉ" /></div>
+            <div style="width:160px"><input type="text" id="orderPhone" placeholder="SĐT" /></div>
+          </div>
+          <datalist id="customersDatalist"></datalist>
 
-    <div class="card">
-      <div style="display:flex;align-items:center;gap:12px">
-        <h3 style="margin:0">Danh sách khách hàng</h3>
-        <button id="toggleCustomers" class="btn icon-only secondary" style="margin-left:8px" title="Hiện/Ẩn"><i data-feather="chevron-down"></i></button>
-        <div class="right small muted"></div>
+          <div style="margin-top:8px"></div>
+          <div id="itemsContainer" style="margin-top:8px"></div>
+
+          <div class="row" style="margin-top:8px">
+            <div style="width:160px"><button id="btnAddItem" class="btn small secondary"><i data-feather="plus"></i> Thêm hàng</button></div>
+            <div class="right" style="width:220px">
+              <div class="row"><div class="col small muted">Tổng tiền đơn:</div><div id="orderTotal" class="badge">0</div></div>
+            </div>
+          </div>
+
+          <div style="margin-top:10px">
+            <button id="btnAddOrder" class="btn update">Thêm đơn</button>
+            <button id="btnCancelEdit" class="btn small ghost" style="margin-left:8px; display:none">Huỷ</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div style="display:flex;align-items:center;gap:12px">
+            <h3 style="margin:0">Danh sách khách hàng</h3>
+            <button id="toggleCustomers" class="btn icon-only secondary" style="margin-left:8px" title="Hiện/Ẩn"><i data-feather="chevron-down"></i></button>
+            <div class="right small muted"></div>
+          </div>
+
+          <div style="margin-top:8px; display:flex; gap:8px; align-items:center;">
+            <input id="customerSearch" type="text" placeholder="Tìm khách (tên hoặc SĐT)" style="flex:1;" />
+            <input type="file" id="uploadCustomers" accept=".xlsx,.csv" />
+          </div>
+
+          <div id="customersPanel" class="customers-panel" style="margin-top:8px"></div>
+          <div style="margin-top:10px"><small class="muted">(Import cập nhật local & sẽ gửi lên Google Sheets khi bạn bấm Lưu)</small></div>
+        </div>
       </div>
-
-      <div style="margin-top:8px; display:flex; gap:8px; align-items:center;">
-        <input id="customerSearch" type="text" placeholder="Tìm khách (tên hoặc SĐT)" style="flex:1;" />
-        <input type="file" id="uploadCustomers" accept=".xlsx,.csv" />
-      </div>
-
-      <div id="customersPanel" class="customers-panel" style="margin-top:8px"></div>
-      <div style="margin-top:10px"><small class="muted">(Import cập nhật local & sẽ gửi lên Google Sheets khi bạn bấm Lưu)</small></div>
     </div>
 
-    <div class="footer-note">Nấm lùn- 0388722491 - Eco Xuân</div>
+    <div class="footer-note">Nấm lùn - 0388722491 - Eco Xuân</div>
   </div>
 
-  <!-- feather icons (stable CDN) and helpers -->
+  <!-- feather/xlsx/html2canvas/jspdf -->
   <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -156,7 +159,7 @@
 
   <script>
     // ---------- CONFIG ----------
-    const GS_URL = 'https://script.google.com/macros/s/AKfycbz-1WXX8s2HEtYaNu11HR8S8pUzSgkb5nHq8KWMm-xoLfCmIssBsWQhIo-qjM03FbZK/exec'; // <-- dán Web App URL của bạn nếu muốn sync tự động
+    const GS_URL = 'https://script.google.com/macros/s/AKfycbz-1WXX8s2HEtYaNu11HR8S8pUzSgkb5nHq8KWMm-xoLfCmIssBsWQhIo-qjM03FbZK/exec'; // set your Apps Script Web App URL
     const USE_REMOTE = GS_URL && GS_URL.includes('script.google.com');
 
     // ---------- utils ----------
@@ -169,7 +172,8 @@
     let batches = [];
     let customers = [];
     let currentBatchId = null;
-    let currentCustomerIndex = -1; // for prev/next nav
+    let currentCustomerIndex = -1;
+    let editingOrderIndex = -1; // index of order being edited (-1 = not editing)
     const LS_KEY = 'ordergo_v2_data';
 
     // ---------- persistence ----------
@@ -192,9 +196,28 @@
     function ensureIcons(){ if(window.feather && typeof feather.replace === 'function'){ try{ feather.replace(); } catch(e){} } else setTimeout(ensureIcons,150); }
 
     // ---------- rendering ----------
-    function renderBatchList(){ const sel = $('selBatches'); sel.innerHTML=''; batches.forEach(b => { const opt = document.createElement('option'); opt.value = b.id; opt.textContent = b.name; if(b.id===currentBatchId) opt.selected = true; sel.appendChild(opt); }); if(batches.length===0){ const opt=document.createElement('option'); opt.value=''; opt.textContent='(Chưa có mã đơn tổng)'; sel.appendChild(opt); } }
+    function renderBatchList(){
+      const sel = $('selBatches'); sel.innerHTML = '';
+      batches.forEach(b => {
+        const opt = document.createElement('option');
+        opt.value = b.id; opt.textContent = b.name;
+        if(b.id === currentBatchId) opt.selected = true;
+        sel.appendChild(opt);
+      });
+      if(batches.length === 0){
+        const opt = document.createElement('option');
+        opt.value = ''; opt.textContent = '(Chưa có mã đơn tổng)';
+        sel.appendChild(opt);
+      }
+    }
 
-    function renderProducts(){ const tb = document.querySelector('#tblProducts tbody'); tb.innerHTML=''; const b = getCurrentBatch(); if(!b){ refreshItemSelectOptions(); return; } b.products.forEach((p, idx) => { const tr = document.createElement('tr'); tr.innerHTML = `
+    function renderProducts(){
+      const tb = document.querySelector('#tblProducts tbody'); tb.innerHTML = '';
+      const b = getCurrentBatch();
+      if(!b){ refreshItemSelectOptions(); return; }
+      b.products.forEach((p, idx) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
           <td>${p.name}</td>
           <td>${p.in}</td>
           <td>${p.sold||0}</td>
@@ -203,83 +226,372 @@
           <td>
             <button class="icon-btn" data-action="edit" data-idx="${idx}" title="Edit" aria-label="Edit"><i data-feather="edit-2"></i></button>
             <button class="icon-btn" data-action="delete" data-idx="${idx}" title="Xóa" aria-label="Xóa"><i data-feather="trash-2"></i></button>
-          </td>`; tb.appendChild(tr); }); refreshItemSelectOptions(); ensureIcons(); }
+          </td>`;
+        tb.appendChild(tr);
+      });
+      refreshItemSelectOptions();
+      ensureIcons();
+    }
 
-    function renderOrders(){ const tb = document.querySelector('#tblOrders tbody'); tb.innerHTML=''; const b = getCurrentBatch(); if(!b) return; let grand=0; b.orders.forEach((o, idx) => { const itemsStr = Array.isArray(o.items) ? o.items.map(it => `${it.name} x${it.qty}`).join('<br/>') : (o.items||''); grand += Number(o.total||0); const tr = document.createElement('tr'); tr.innerHTML = `
+    function renderOrders(){
+      const tb = document.querySelector('#tblOrders tbody'); tb.innerHTML = '';
+      const b = getCurrentBatch();
+      if(!b) return;
+      let grand = 0;
+      b.orders.forEach((o, idx) => {
+        const itemsStr = Array.isArray(o.items) ? o.items.map(it => `${it.name} x${it.qty}`).join('<br/>') : (o.items || '');
+        grand += Number(o.total || 0);
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
           <td>${idx+1}</td>
           <td>${o.customer}</td>
           <td class="wrap-text">${o.address} / ${o.phone}</td>
           <td class="wrap-text">${itemsStr}</td>
           <td>${fmtCurrency(o.total)}</td>
           <td>
-            <button class="icon-btn" data-action="edit-order" data-idx="${idx}" title="Edit" aria-label="Edit"><i data-feather="edit-2"></i></button>
+            <button class="icon-btn" data-action="edit-order" data-idx="${idx}" title="Điều chỉnh" aria-label="Edit"><i data-feather="edit-2"></i></button>
             <button class="icon-btn" data-action="del-order" data-idx="${idx}" title="Xóa" aria-label="Xóa"><i data-feather="trash-2"></i></button>
-          </td>`; tb.appendChild(tr); }); $('grandTotal').textContent = fmtCurrency(grand); ensureIcons(); }
+          </td>`;
+        tb.appendChild(tr);
+      });
+      $('grandTotal').textContent = fmtCurrency(grand);
+      ensureIcons();
+    }
 
     // ---------- items (order lines) ----------
-    const itemsContainer = $('itemsContainer'); function itemsContainerClear(){ itemsContainer.innerHTML=''; }
+    const itemsContainer = $('itemsContainer');
+    function itemsContainerClear(){ itemsContainer.innerHTML = ''; }
 
-    function refreshItemSelectOptions(){ const b = getCurrentBatch(); const prodNames = b ? b.products.map(p => p.name) : []; Array.from(document.querySelectorAll('.item-select')).forEach(sel => { const oldVal = sel.value; sel.innerHTML=''; const opt0 = document.createElement('option'); opt0.value=''; opt0.textContent='-- Chọn hàng --'; sel.appendChild(opt0); if(prodNames.length===0){ const opt=document.createElement('option'); opt.value=''; opt.textContent='(Chưa có hàng hóa)'; sel.appendChild(opt); } prodNames.forEach(name=>{ const o = document.createElement('option'); o.value=name; o.textContent=name; if(name===oldVal) o.selected=true; sel.appendChild(o); }); }); }
+    function refreshItemSelectOptions(){
+      const b = getCurrentBatch();
+      const prodNames = b ? b.products.map(p => p.name) : [];
+      Array.from(document.querySelectorAll('.item-select')).forEach(sel => {
+        const oldVal = sel.value;
+        sel.innerHTML = '';
+        const opt0 = document.createElement('option'); opt0.value = ''; opt0.textContent = '-- Chọn hàng --'; sel.appendChild(opt0);
+        if(prodNames.length === 0){
+          const opt = document.createElement('option'); opt.value = ''; opt.textContent = '(Chưa có hàng hóa)'; sel.appendChild(opt);
+        }
+        prodNames.forEach(name => {
+          const o = document.createElement('option'); o.value = name; o.textContent = name;
+          if(name === oldVal) o.selected = true;
+          sel.appendChild(o);
+        });
+      });
+    }
 
-    function addItemRow(prefName, prefQty){ const row=document.createElement('div'); row.className='row'; row.style.marginTop='8px'; const sel=document.createElement('select'); sel.className='item-select'; sel.style.width='40%'; const spacer=document.createElement('div'); spacer.style.width='12px'; const inpQty=document.createElement('input'); inpQty.type='number'; inpQty.min=0; inpQty.value = prefQty||1; inpQty.style.width='120px'; const btnDel=document.createElement('button'); btnDel.className='btn small ghost'; btnDel.type='button'; btnDel.textContent='Xóa'; btnDel.style.marginLeft='8px'; row.appendChild(sel); row.appendChild(spacer); row.appendChild(inpQty); row.appendChild(btnDel); itemsContainer.appendChild(row); btnDel.addEventListener('click', ()=>{ row.remove(); updateOrderTotal(); }); sel.addEventListener('change', ()=>updateOrderTotal()); inpQty.addEventListener('input', ()=>updateOrderTotal()); refreshItemSelectOptions(); if(prefName) sel.value=prefName; return row; }
+    function addItemRow(prefName, prefQty){
+      const row = document.createElement('div'); row.className = 'row'; row.style.marginTop='8px';
+      const sel = document.createElement('select'); sel.className = 'item-select'; sel.style.width='40%';
+      const spacer = document.createElement('div'); spacer.style.width='12px';
+      const inpQty = document.createElement('input'); inpQty.type='number'; inpQty.min=0; inpQty.value = prefQty || 1; inpQty.style.width='120px';
+      const btnDel = document.createElement('button'); btnDel.className='btn small ghost'; btnDel.type='button'; btnDel.textContent='Xóa'; btnDel.style.marginLeft='8px';
+      row.appendChild(sel); row.appendChild(spacer); row.appendChild(inpQty); row.appendChild(btnDel);
+      itemsContainer.appendChild(row);
 
-    function updateOrderTotal(){ const rows = Array.from(itemsContainer.children); let total=0; rows.forEach(r=>{ const sel=r.querySelector('select'); const qty=Number(r.querySelector('input[type=number]').value||0); const prod = getCurrentBatch() ? getCurrentBatch().products.find(p=>p.name===sel.value) : null; if(prod) total += Number(prod.price||0)*qty; }); $('orderTotal').textContent = fmtCurrency(total); return total; }
+      btnDel.addEventListener('click', ()=>{ row.remove(); updateOrderTotal(); });
+      sel.addEventListener('change', ()=>updateOrderTotal());
+      inpQty.addEventListener('input', ()=>updateOrderTotal());
+      refreshItemSelectOptions();
+      if(prefName) sel.value = prefName;
+      return row;
+    }
+
+    function updateOrderTotal(){
+      const rows = Array.from(itemsContainer.children);
+      let total = 0;
+      rows.forEach(r => {
+        const sel = r.querySelector('select');
+        const qty = Number(r.querySelector('input[type=number]').value || 0);
+        const prod = getCurrentBatch() ? getCurrentBatch().products.find(p => p.name === sel.value) : null;
+        if(prod) total += Number(prod.price || 0) * qty;
+      });
+      $('orderTotal').textContent = fmtCurrency(total);
+      return total;
+    }
 
     // ---------- actions ----------
-    function createNewBatchPrompt(){ let name = prompt('Tên mã đơn tổng (tùy chọn). Mặc định sẽ là YYYYMMDD nếu để trống:', ''); if(name===null) return; name = String(name||'').trim(); const d=new Date(); const pad=n=>String(n).padStart(2,'0'); const prefix = `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}`; let final = name ? `${prefix}_${name}` : `${prefix}`; const sanitized = sanitizeForSheetName(final); if(sanitized !== final){ if(!confirm(`Tên sẽ được chuẩn hóa: ${sanitized}\nBạn đồng ý?`)) return; final = sanitized; } else final = sanitized; const id = uid('batch'); const b = { id, name: final, products: [], orders: [], timestamp: new Date().toISOString() }; batches.unshift(b); currentBatchId = id; persistAll(); renderAll(); alert(`Đã tạo batch: ${final}`); }
+    function createNewBatchPrompt(){
+      let name = prompt('Tên mã đơn tổng (tùy chọn). Mặc định sẽ là YYYYMMDD nếu để trống:', '');
+      if(name === null) return;
+      name = String(name || '').trim();
+      const d = new Date(); const pad = n => String(n).padStart(2,'0');
+      const prefix = `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}`;
+      let final = name ? `${prefix}_${name}` : `${prefix}`;
+      const sanitized = sanitizeForSheetName(final);
+      if(sanitized !== final){
+        if(!confirm(`Tên sẽ được chuẩn hóa: ${sanitized}\nBạn đồng ý?`)) return;
+        final = sanitized;
+      } else final = sanitized;
+      const id = uid('batch');
+      const b = { id, name: final, products: [], orders: [], timestamp: new Date().toISOString() };
+      batches.unshift(b); currentBatchId = id; persistAll(); renderAll(); alert(`Đã tạo batch: ${final}`);
+    }
 
-    function addProductFromForm(){ const name=$('prodName').value.trim(); if(!name){ alert('Tên hàng không được trống'); return; } const pin=Number($('prodIn').value||0); const price=Number($('prodPrice').value||0); const b=getCurrentBatch(); if(!b){ alert('Chọn hoặc tạo mã đơn tổng trước'); return; } b.products.push({ name, in: pin, sold:0, remain: pin, price }); $('prodName').value=''; $('prodIn').value=''; $('prodPrice').value=''; persistAll(); renderProducts(); refreshItemSelectOptions(); }
+    function addProductFromForm(){
+      const name = $('prodName').value.trim();
+      if(!name){ alert('Tên hàng không được trống'); return; }
+      const pin = Number($('prodIn').value || 0);
+      const price = Number($('prodPrice').value || 0);
+      const b = getCurrentBatch();
+      if(!b){ alert('Chọn hoặc tạo mã đơn tổng trước'); return; }
+      b.products.push({ name, in: pin, sold:0, remain: pin, price });
+      $('prodName').value=''; $('prodIn').value=''; $('prodPrice').value='';
+      persistAll(); renderProducts(); refreshItemSelectOptions();
+    }
 
     function addItemToOrder(){ addItemRow('',1); }
 
-    function addOrderFromForm(){ const b=getCurrentBatch(); if(!b){ alert('Chọn mã đơn tổng trước'); return; } const customer=$('orderCustomer').value.trim(); const address=$('orderAddress').value.trim(); const phone=$('orderPhone').value.trim(); if(!customer){ alert('Nhập tên khách hàng'); return; } const items=[]; Array.from(itemsContainer.children).forEach(r=>{ const name=r.querySelector('select').value; const qty=Number(r.querySelector('input[type=number]').value||0); if(name && qty>0) items.push({ name, qty }); }); if(items.length===0){ alert('Phải có ít nhất 1 mặt hàng với số lượng > 0'); return; } const total=updateOrderTotal(); const order={ customer, address, phone, items, total, created:new Date().toISOString() }; b.orders.push(order); items.forEach(it=>{ const p = b.products.find(pp => pp.name===it.name); if(p){ p.sold = (p.sold||0) + Number(it.qty); p.remain = (p.in||0) - p.sold; if(p.remain < 0) p.remain = 0; } });
+    // Add or update order
+    function addOrderFromForm(){
+      const b = getCurrentBatch();
+      if(!b){ alert('Chọn mã đơn tổng trước'); return; }
+      const customer = $('orderCustomer').value.trim();
+      const address = $('orderAddress').value.trim();
+      const phone = $('orderPhone').value.trim();
+      if(!customer){ alert('Nhập tên khách hàng'); return; }
+      const items = [];
+      Array.from(itemsContainer.children).forEach(r => {
+        const name = r.querySelector('select').value;
+        const qty = Number(r.querySelector('input[type=number]').value || 0);
+        if(name && qty>0) items.push({ name, qty });
+      });
+      if(items.length === 0){ alert('Phải có ít nhất 1 mặt hàng với số lượng > 0'); return; }
+      const total = updateOrderTotal();
+      const order = { customer, address, phone, items, total, created: new Date().toISOString() };
 
-      // update customer list by name as key (update address/phone if exists)
-      const idx = customers.findIndex(c => lcName(c.name) === lcName(customer));
-      if(idx === -1){ customers.unshift({ name: customer, address, phone }); currentCustomerIndex = 0; } else { customers[idx].address = address; customers[idx].phone = phone; currentCustomerIndex = idx; }
+      // If editing existing order: update that index and adjust product sold counts
+      if(editingOrderIndex >= 0 && editingOrderIndex < b.orders.length){
+        const oldOrder = b.orders[editingOrderIndex];
+        // Revert old sold counts
+        if(Array.isArray(oldOrder.items)){
+          oldOrder.items.forEach(it => {
+            const p = b.products.find(pp => pp.name === it.name);
+            if(p){ p.sold = Math.max(0, (p.sold||0) - Number(it.qty)); p.remain = Math.max(0, (p.in||0) - (p.sold||0)); }
+          });
+        }
+        // Apply new sold counts
+        items.forEach(it => {
+          const p = b.products.find(pp => pp.name === it.name);
+          if(p){ p.sold = (p.sold||0) + Number(it.qty); p.remain = Math.max(0, (p.in||0) - (p.sold||0)); }
+        });
+        // Update order in place
+        b.orders[editingOrderIndex] = order;
+        editingOrderIndex = -1;
+        // restore button
+        $('btnAddOrder').textContent = 'Thêm đơn';
+        $('btnAddOrder').classList.add('update'); // keep style
+        $('btnCancelEdit').style.display = 'none';
+      } else {
+        // New order
+        b.orders.push(order);
+        // apply sold counts
+        items.forEach(it => {
+          const p = b.products.find(pp => pp.name === it.name);
+          if(p){ p.sold = (p.sold||0) + Number(it.qty); p.remain = Math.max(0, (p.in||0) - (p.sold||0)); }
+        });
+        // add to customers list if new or update existing
+        const idx = customers.findIndex(c => lcName(c.name) === lcName(customer));
+        if(idx === -1){ customers.unshift({ name: customer, address, phone }); currentCustomerIndex = 0; } else { customers[idx].address = address; customers[idx].phone = phone; currentCustomerIndex = idx; }
+      }
 
-      $('orderCustomer').value=''; $('orderAddress').value=''; $('orderPhone').value=''; itemsContainerClear(); addItemRow('',1); addItemRow('',1); $('orderTotal').textContent = fmtCurrency(0); persistAll(); renderAll(); }
+      // Clear form
+      $('orderCustomer').value=''; $('orderAddress').value=''; $('orderPhone').value='';
+      itemsContainerClear(); addItemRow('',1); addItemRow('',1); $('orderTotal').textContent = fmtCurrency(0);
+      persistAll(); renderAll();
+    }
 
-    function editProduct(index){ const b=getCurrentBatch(); if(!b) return; const p=b.products[index]; const newName=prompt('Tên hàng', p.name); if(newName===null) return; p.name=newName; p.in=Number(prompt('Nhập', p.in)||p.in); p.price=Number(prompt('Giá bán', p.price)||p.price); p.remain = p.in - (p.sold||0); persistAll(); renderProducts(); }
+    function cancelEdit(){
+      editingOrderIndex = -1;
+      $('btnAddOrder').textContent = 'Thêm đơn';
+      $('btnCancelEdit').style.display = 'none';
+      // clear form
+      $('orderCustomer').value=''; $('orderAddress').value=''; $('orderPhone').value='';
+      itemsContainerClear(); addItemRow('',1); addItemRow('',1); $('orderTotal').textContent = fmtCurrency(0);
+    }
 
-    function editOrder(index){ const b=getCurrentBatch(); if(!b) return; const o=b.orders[index]; $('orderCustomer').value=o.customer; $('orderAddress').value=o.address; $('orderPhone').value=o.phone; itemsContainerClear(); if(Array.isArray(o.items)) o.items.forEach(it=>addItemRow(it.name, it.qty)); else { addItemRow('',1); addItemRow('',1); } updateOrderTotal(); b.orders.splice(index,1); persistAll(); renderOrders(); renderProducts(); }
+    function editProduct(index){
+      const b = getCurrentBatch(); if(!b) return;
+      const p = b.products[index];
+      const newName = prompt('Tên hàng', p.name);
+      if(newName === null) return;
+      p.name = newName;
+      p.in = Number(prompt('Nhập', p.in) || p.in);
+      p.price = Number(prompt('Giá bán', p.price) || p.price);
+      p.remain = p.in - (p.sold||0);
+      persistAll(); renderProducts();
+    }
+
+    // When user clicks "Điều chỉnh" on an order
+    function editOrder(index){
+      const b = getCurrentBatch(); if(!b) return;
+      const o = b.orders[index];
+      if(!o) return;
+      // populate form with order data but DO NOT remove order from list
+      $('orderCustomer').value = o.customer; $('orderAddress').value = o.address; $('orderPhone').value = o.phone;
+      itemsContainerClear();
+      if(Array.isArray(o.items) && o.items.length){
+        o.items.forEach(it => addItemRow(it.name, it.qty));
+      } else {
+        addItemRow('',1); addItemRow('',1);
+      }
+      updateOrderTotal();
+      editingOrderIndex = index;
+      // change button to indicate update
+      $('btnAddOrder').textContent = 'Cập nhật đơn';
+      $('btnCancelEdit').style.display = 'inline-flex';
+    }
+
+    function deleteOrder(index){
+      const b = getCurrentBatch(); if(!b) return;
+      if(!confirm('Xóa đơn này?')) return;
+      const o = b.orders[index];
+      if(o && Array.isArray(o.items)){
+        // revert sold counts
+        o.items.forEach(it => {
+          const p = b.products.find(pp => pp.name === it.name);
+          if(p){ p.sold = Math.max(0, (p.sold||0) - Number(it.qty)); p.remain = Math.max(0, (p.in||0) - (p.sold||0)); }
+        });
+      }
+      b.orders.splice(index,1);
+      persistAll(); renderOrders(); renderProducts();
+    }
 
     function deleteBatch(id){ if(!id) return; const bidx = batches.findIndex(b=>b.id===id); if(bidx===-1) return; if(!confirm('Xóa mã này? Hành động không thể hoàn tác.')) return; batches.splice(bidx,1); currentBatchId = batches[0] ? batches[0].id : null; persistAll(); renderAll(); }
 
     // ---------- remote save/load ----------
-    async function gsSaveAll(){ if(!USE_REMOTE) return false; try{ const payloadObj = { batches, customers, currentBatchId }; const params = new URLSearchParams(); params.append('action','saveAll'); params.append('data', JSON.stringify({ data: payloadObj })); const resp = await fetch(GS_URL, { method:'POST', body: params }); const text = await resp.text(); let j = {}; try{ j = JSON.parse(text); } catch(e){ j = { ok:false, raw:text }; } if(j && j.ok){ console.log('gsSaveAll ok'); return true; } else { console.warn('gsSaveAll server error', j); alert('Lưu lên Google Sheets thất bại: ' + (j && j.error ? j.error : JSON.stringify(j))); return false; } } catch(err){ console.error('gsSaveAll error', err); alert('Lỗi khi lưu lên Google Sheets. Kiểm tra console (F12).'); return false; } }
+    async function gsSaveAll(){
+      if(!USE_REMOTE) return false;
+      try{
+        const payloadObj = { batches, customers, currentBatchId };
+        const params = new URLSearchParams();
+        params.append('action','saveAll');
+        params.append('data', JSON.stringify({ data: payloadObj }));
+        const resp = await fetch(GS_URL, { method:'POST', body: params });
+        const text = await resp.text();
+        let j = {};
+        try{ j = JSON.parse(text); } catch(e){ j = { ok:false, raw:text }; }
+        if(j && j.ok){ console.log('gsSaveAll ok'); return true; } else { console.warn('gsSaveAll server error', j); alert('Lưu lên Google Sheets thất bại: ' + (j && j.error ? j.error : JSON.stringify(j))); return false; }
+      } catch(err){ console.error('gsSaveAll error', err); alert('Lỗi khi lưu lên Google Sheets. Kiểm tra console (F12).'); return false; }
+    }
 
-    async function gsLoadAll(){ if(!USE_REMOTE) return false; try{ const resp = await fetch(GS_URL + '?action=readAll'); const j = await resp.json(); if(j && j.ok && j.data){ const remote = j.data; // merge batches (remote priority)
-          const remoteBatches = (remote.batches || []).map(rb => ({ id: rb.id || rb.name, name: rb.name, products: rb.products || [], orders: rb.orders || [] })); if(remoteBatches.length) batches = remoteBatches; // merge customers: remote overwrite local when same name
+    // gsLoadAll: expects remote to return {ok:true, data:{batches:[], customers:[], currentBatchId}}
+    async function gsLoadAll(){
+      if(!USE_REMOTE) return false;
+      try{
+        const resp = await fetch(GS_URL + '?action=readAll');
+        const j = await resp.json();
+        if(j && j.ok && j.data){
+          const remote = j.data;
+          const remoteBatches = (remote.batches || []).map(rb => ({ id: rb.id || rb.name, name: rb.name, products: rb.products || [], orders: rb.orders || [] }));
+          if(remoteBatches.length) batches = remoteBatches;
+          // merge customers (remote priority)
           const remoteCust = remote.customers || [];
-          const merged = [];
           const map = {};
-          remoteCust.concat(customers).forEach(c=>{ const key = lcName(c.name); if(!map[key]){ map[key] = { name: c.name, address: c.address || '', phone: c.phone || '' }; } else { // if exists keep earlier (remote came first)
-            if(c.address) map[key].address = c.address; if(c.phone) map[key].phone = c.phone; } });
-          for(const k in map) merged.push(map[k]); customers = merged;
+          remoteCust.concat(customers).forEach(c=>{
+            const key = lcName(c.name); if(!key) return;
+            if(!map[key]) map[key] = { name: c.name, address: c.address || '', phone: c.phone || '' };
+            else { if(c.address) map[key].address = c.address; if(c.phone) map[key].phone = c.phone; }
+          });
+          customers = Object.values(map);
           currentBatchId = remote.currentBatchId || (batches[0] && batches[0].id) || currentBatchId;
-          persistAll(); renderAll(); return true; } return false; } catch(err){ console.error('gsLoadAll error', err); return false; } }
+          persistAll();
+          return true;
+        }
+        return false;
+      } catch(err){ console.error('gsLoadAll error', err); return false; }
+    }
 
     // ---------- import customers ----------
-    function handleUploadCustomers(file){ const reader = new FileReader(); reader.onload = function(e){ const data = e.target.result; let workbook = null; try{ workbook = XLSX.read(data, {type:'binary'}); } catch(ex){ try{ workbook = XLSX.read(data, {type:'string'}); } catch(e2){ alert('Không đọc được file'); return; } } const firstSheetName = workbook.SheetNames[0]; const ws = workbook.Sheets[firstSheetName]; const arr = XLSX.utils.sheet_to_json(ws, { header:1 }); let added=0, updated=0; arr.slice(1).forEach(r => { const name = (r[0] || '').toString().trim(); const addr = (r[1] || '').toString().trim(); const phone = (r[2] || '').toString().trim(); if(!name) return; const key = lcName(name); const idx = customers.findIndex(c => lcName(c.name) === key); if(idx === -1){ customers.unshift({ name, address: addr, phone }); added++; } else { customers[idx].address = addr; customers[idx].phone = phone; updated++; } }); persistAll(); renderCustomersPanel(); updateCustomersDatalist(); alert(`Import hoàn tất. Thêm: ${added}, Cập nhật: ${updated}`); }; reader.readAsBinaryString(file); }
+    function handleUploadCustomers(file){
+      const reader = new FileReader();
+      reader.onload = function(e){
+        const data = e.target.result;
+        let workbook = null;
+        try{ workbook = XLSX.read(data, {type:'binary'}); } catch(ex){
+          try{ workbook = XLSX.read(data, {type:'string'}); } catch(e2){ alert('Không đọc được file'); return; }
+        }
+        const firstSheetName = workbook.SheetNames[0];
+        const ws = workbook.Sheets[firstSheetName];
+        const arr = XLSX.utils.sheet_to_json(ws, { header:1 });
+        let added=0, updated=0;
+        arr.slice(1).forEach(r => {
+          const name = (r[0] || '').toString().trim();
+          const addr = (r[1] || '').toString().trim();
+          const phone = (r[2] || '').toString().trim();
+          if(!name) return;
+          const key = lcName(name);
+          const idx = customers.findIndex(c => lcName(c.name) === key);
+          if(idx === -1){ customers.unshift({ name, address: addr, phone }); added++; } else { customers[idx].address = addr; customers[idx].phone = phone; updated++; }
+        });
+        persistAll(); renderCustomersPanel(); updateCustomersDatalist(); alert(`Import hoàn tất. Thêm: ${added}, Cập nhật: ${updated}`);
+      };
+      reader.readAsBinaryString(file);
+    }
 
-    function renderCustomersPanel(){ const panel = $('customersPanel'); panel.innerHTML=''; if(!customers.length){ panel.innerHTML = '<div class="small muted">(Chưa có dữ liệu khách hàng)</div>'; return; } customers.forEach((c, i) => { const row = document.createElement('div'); row.className='customer-row'; const left = document.createElement('div'); left.innerHTML = `<div><strong>${c.name}</strong><div class="small muted">${c.address} • ${c.phone}</div></div>`; const right = document.createElement('div'); const btnPick = document.createElement('button'); btnPick.className='btn small ghost'; btnPick.textContent='Chọn'; btnPick.addEventListener('click', ()=>{ $('orderCustomer').value=c.name; $('orderAddress').value=c.address; $('orderPhone').value=c.phone; currentCustomerIndex = i; }); const btnDel = document.createElement('button'); btnDel.className='btn small'; btnDel.style.marginLeft='8px'; btnDel.textContent='Xóa'; btnDel.addEventListener('click', ()=>{ if(!confirm('Xóa khách này?')) return; customers.splice(i,1); persistAll(); renderCustomersPanel(); updateCustomersDatalist(); }); right.appendChild(btnPick); right.appendChild(btnDel); row.appendChild(left); row.appendChild(right); panel.appendChild(row); }); }
+    function renderCustomersPanel(){
+      const panel = $('customersPanel'); panel.innerHTML = '';
+      if(!customers.length){ panel.innerHTML = '<div class="small muted">(Chưa có dữ liệu khách hàng)</div>'; return; }
+      customers.forEach((c, i) => {
+        const row = document.createElement('div'); row.className = 'customer-row';
+        const left = document.createElement('div');
+        left.innerHTML = `<div><strong>${c.name}</strong><div class="small muted">${c.address} • ${c.phone}</div></div>`;
+        const right = document.createElement('div');
+        const btnPick = document.createElement('button'); btnPick.className='btn small ghost'; btnPick.textContent='Chọn';
+        btnPick.addEventListener('click', ()=>{ $('orderCustomer').value=c.name; $('orderAddress').value=c.address; $('orderPhone').value=c.phone; currentCustomerIndex = i; });
+        const btnDel = document.createElement('button'); btnDel.className='btn small'; btnDel.style.marginLeft='8px'; btnDel.textContent='Xóa';
+        btnDel.addEventListener('click', ()=>{ if(!confirm('Xóa khách này?')) return; customers.splice(i,1); persistAll(); renderCustomersPanel(); updateCustomersDatalist(); });
+        right.appendChild(btnPick); right.appendChild(btnDel);
+        row.appendChild(left); row.appendChild(right); panel.appendChild(row);
+      });
+    }
 
     function updateCustomersDatalist(){ const dl = $('customersDatalist'); dl.innerHTML=''; customers.forEach(c => { const o = document.createElement('option'); o.value = c.name; dl.appendChild(o); }); }
 
     // ---------- delegated handlers for table buttons ----------
-    function attachDelegatedTableHandlers(){ const prodTbody = document.querySelector('#tblProducts tbody'); if(prodTbody && !prodTbody._hasDelegation){ prodTbody.addEventListener('click', function(e){ const btn = e.target.closest('button[data-action]'); if(!btn) return; const action = btn.getAttribute('data-action'); const idx = Number(btn.dataset.idx); if(action === 'delete'){ if(confirm('Xóa sản phẩm?')){ const b = getCurrentBatch(); if(!b) return; b.products.splice(idx,1); persistAll(); renderProducts(); renderOrders(); } } else if(action === 'edit'){ editProduct(idx); } }); prodTbody._hasDelegation = true; }
+    function attachDelegatedTableHandlers(){
+      const prodTbody = document.querySelector('#tblProducts tbody');
+      if(prodTbody && !prodTbody._hasDelegation){
+        prodTbody.addEventListener('click', function(e){
+          const btn = e.target.closest('button[data-action]');
+          if(!btn) return;
+          const action = btn.getAttribute('data-action');
+          const idx = Number(btn.dataset.idx);
+          if(action === 'delete'){
+            if(confirm('Xóa sản phẩm?')){
+              const b = getCurrentBatch(); if(!b) return;
+              b.products.splice(idx,1); persistAll(); renderProducts(); renderOrders();
+            }
+          } else if(action === 'edit'){
+            editProduct(idx);
+          }
+        });
+        prodTbody._hasDelegation = true;
+      }
 
-      const orderTbody = document.querySelector('#tblOrders tbody'); if(orderTbody && !orderTbody._hasDelegation){ orderTbody.addEventListener('click', function(e){ const btn = e.target.closest('button[data-action]'); if(!btn) return; const action = btn.getAttribute('data-action'); const idx = Number(btn.dataset.idx); if(action === 'del-order'){ if(confirm('Xóa đơn này?')){ const b = getCurrentBatch(); if(!b) return; b.orders.splice(idx,1); persistAll(); renderOrders(); renderProducts(); } } else if(action === 'edit-order'){ editOrder(idx); } }); orderTbody._hasDelegation = true; } }
+      const orderTbody = document.querySelector('#tblOrders tbody');
+      if(orderTbody && !orderTbody._hasDelegation){
+        orderTbody.addEventListener('click', function(e){
+          const btn = e.target.closest('button[data-action]');
+          if(!btn) return;
+          const action = btn.getAttribute('data-action');
+          const idx = Number(btn.dataset.idx);
+          if(action === 'del-order'){
+            deleteOrder(idx);
+          } else if(action === 'edit-order'){
+            editOrder(idx);
+          }
+        });
+        orderTbody._hasDelegation = true;
+      }
+    }
 
-    // ---------- export functions (defined to avoid undefined errors) ----------
-    function exportExcel(){ // export customers + batches summary
+    // ---------- export functions ----------
+    function exportExcel(){
       try{
         const wb = XLSX.utils.book_new();
-        // customers sheet
         const custRows = [['Tên','Địa chỉ','SĐT']].concat(customers.map(c=>[c.name,c.address,c.phone]));
         const wsC = XLSX.utils.aoa_to_sheet(custRows); XLSX.utils.book_append_sheet(wb, wsC, 'Customers');
-        // batches summary
         const batRows = [['Batch','#Products','#Orders','Total']];
         batches.forEach(b=>{ const total = (b.orders||[]).reduce((s,o)=>s + Number(o.total||0),0); batRows.push([b.name, (b.products||[]).length, (b.orders||[]).length, total]); });
         const wsB = XLSX.utils.aoa_to_sheet(batRows); XLSX.utils.book_append_sheet(wb, wsB, 'Batches');
@@ -287,38 +599,91 @@
       } catch(e){ console.error(e); alert('Lỗi khi xuất Excel.'); }
     }
 
-    async function exportPDF(){ try{ const el = document.querySelector('#tblOrders'); if(!el){ alert('Không có nội dung để in'); return; } const canvas = await html2canvas(el, { scale:2 }); const img = canvas.toDataURL('image/png'); const { jsPDF } = window.jspdf; const pdf = new jsPDF('p','mm','a4'); const pageWidth = pdf.internal.pageSize.getWidth(); const pageHeight = pdf.internal.pageSize.getHeight(); const imgProps = pdf.getImageProperties(img); const pdfHeight = (imgProps.height * pageWidth) / imgProps.width; pdf.addImage(img, 'PNG', 0, 0, pageWidth, pdfHeight); pdf.save(`orders_${new Date().toISOString().slice(0,10)}.pdf`); } catch(e){ console.error(e); alert('Lỗi khi xuất PDF'); } }
+    async function exportPDF(){
+      try{
+        const el = document.querySelector('#tblOrders');
+        if(!el){ alert('Không có nội dung để in'); return; }
+        const canvas = await html2canvas(el, { scale:2 });
+        const img = canvas.toDataURL('image/png');
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF('p','mm','a4');
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const imgProps = pdf.getImageProperties(img);
+        const pdfHeight = (imgProps.height * pageWidth) / imgProps.width;
+        pdf.addImage(img, 'PNG', 0, 0, pageWidth, pdfHeight);
+        pdf.save(`orders_${new Date().toISOString().slice(0,10)}.pdf`);
+      } catch(e){ console.error(e); alert('Lỗi khi xuất PDF'); }
+    }
 
     // ---------- attach UI handlers ----------
-    function attachHandlers(){ $('btnNewBatch').addEventListener('click', createNewBatchPrompt); $('selBatches').addEventListener('change',(e)=>{ currentBatchId = e.target.value; persistAll(); renderAll(); }); $('btnAddProd').addEventListener('click', addProductFromForm); $('btnAddItem').addEventListener('click', addItemToOrder); $('btnAddOrder').addEventListener('click', addOrderFromForm); $('btnSave').addEventListener('click', saveLocal); $('btnExportExcel').addEventListener('click', exportExcel); $('btnExportPDF').addEventListener('click', exportPDF); $('toggleCustomers').addEventListener('click', ()=>{ $('customersPanel').classList.toggle('collapsed'); const ic = $('toggleCustomers').querySelector('i'); if(ic) ic.dataset.feather = $('customersPanel').classList.contains('collapsed') ? 'chevron-down' : 'chevron-up'; ensureIcons(); }); $('uploadCustomers').addEventListener('change',(ev)=>{ const f = ev.target.files[0]; if(f) handleUploadCustomers(f); });
-
-      const cs = $('customerSearch'); if(cs){ cs.addEventListener('input',(ev)=>{ const q = ev.target.value.toLowerCase(); const found = customers.filter(c => (c.name||'').toLowerCase().includes(q) || (c.phone||'').toLowerCase().includes(q)); if(found.length){ const c = found[0]; $('orderCustomer').value = c.name; $('orderAddress').value = c.address; $('orderPhone').value = c.phone; currentCustomerIndex = customers.findIndex(cc => lcName(cc.name) === lcName(c.name)); } }); }
-
-      $('btnCustomerFirst').addEventListener('click', ()=>{ if(customers.length===0) return; currentCustomerIndex = currentCustomerIndex <= 0 ? 0 : currentCustomerIndex-1; const c = customers[currentCustomerIndex]; if(c){ $('orderCustomer').value=c.name; $('orderAddress').value=c.address; $('orderPhone').value=c.phone; } });
-
-      $('btnCustomerNext').addEventListener('click', ()=>{ if(customers.length===0) return; currentCustomerIndex = currentCustomerIndex >= customers.length-1 ? customers.length-1 : currentCustomerIndex+1; const c = customers[currentCustomerIndex]; if(c){ $('orderCustomer').value=c.name; $('orderAddress').value=c.address; $('orderPhone').value=c.phone; } });
-
+    function attachHandlers(){
+      $('btnNewBatch').addEventListener('click', createNewBatchPrompt);
+      $('selBatches').addEventListener('change',(e)=>{ currentBatchId = e.target.value; persistAll(); renderAll(); });
+      $('btnAddProd').addEventListener('click', addProductFromForm);
+      $('btnAddItem').addEventListener('click', addItemToOrder);
+      $('btnAddOrder').addEventListener('click', addOrderFromForm);
+      $('btnCancelEdit').addEventListener('click', cancelEdit);
+      $('btnSave').addEventListener('click', saveLocal);
+      $('btnExportExcel').addEventListener('click', exportExcel);
+      $('btnExportPDF').addEventListener('click', exportPDF);
       $('btnDeleteBatch').addEventListener('click', ()=>{ if(!currentBatchId){ alert('Không có batch nào để xóa'); return; } deleteBatch(currentBatchId); });
 
-      attachDelegatedTableHandlers(); }
+      $('toggleCustomers').addEventListener('click', ()=>{ $('customersPanel').classList.toggle('collapsed'); const ic = $('toggleCustomers').querySelector('i'); if(ic) ic.dataset.feather = $('customersPanel').classList.contains('collapsed') ? 'chevron-down' : 'chevron-up'; ensureIcons(); });
+      $('uploadCustomers').addEventListener('change',(ev)=>{ const f = ev.target.files[0]; if(f) handleUploadCustomers(f); });
 
-    // ---------- renderAll and init ----------
-    function renderAll(){ renderBatchList(); renderProducts(); renderOrders(); renderCustomersPanel(); updateCustomersDatalist(); ensureIcons(); }
+      const cs = $('customerSearch');
+      if(cs){
+        cs.addEventListener('input',(ev)=>{
+          const q = ev.target.value.toLowerCase();
+          const found = customers.filter(c => (c.name||'').toLowerCase().includes(q) || (c.phone||'').toLowerCase().includes(q));
+          if(found.length){
+            const c = found[0];
+            $('orderCustomer').value = c.name; $('orderAddress').value = c.address; $('orderPhone').value = c.phone;
+            currentCustomerIndex = customers.findIndex(cc => lcName(cc.name) === lcName(c.name));
+          }
+        });
+      }
 
-    // initial load
-    loadLocal();
-    if(!batches.length){ const id = uid('batch'); batches.push({ id, name: new Date().toISOString().slice(0,10).replace(/-/g,''), products: [], orders: [] }); currentBatchId = id; persistAll(); }
+      attachDelegatedTableHandlers();
+    }
 
-    itemsContainerClear(); addItemRow('',1); addItemRow('',1);
-    attachHandlers(); renderAll(); ensureIcons();
+    // ---------- init sequence ----------
+    async function proceedInit(){
+      // if still empty after remote/local merge, create default
+      if(!batches.length){
+        const id = uid('batch');
+        batches.push({ id, name: new Date().toISOString().slice(0,10).replace(/-/g,''), products: [], orders: [] });
+        currentBatchId = id; persistAll();
+      }
+      // prepare items and UI
+      itemsContainerClear(); addItemRow('',1); addItemRow('',1);
+      attachHandlers(); renderAll(); ensureIcons();
+      // show icon rendering
+      ensureIcons();
+    }
 
-    if(USE_REMOTE){ gsLoadAll().then(ok=>{ if(!ok) console.warn('Không load được remote'); else console.log('Loaded remote data'); }); }
+    // Load local then remote (if configured). We call gsLoadAll first so remote data appears immediately on open.
+    (function boot(){
+      loadLocal();
+      if(USE_REMOTE){
+        gsLoadAll().then(ok=>{
+          if(!ok) console.warn('Không load được remote (gsLoadAll returned false)');
+          // after remote attempt, init
+          proceedInit();
+        }).catch(err=>{
+          console.error('gsLoadAll failed', err);
+          proceedInit();
+        });
+      } else {
+        proceedInit();
+      }
+    })();
 
     // expose for debugging
     window.ordergo = { batches, customers, persistAll, gsSaveAll, gsLoadAll };
-
   </script>
-
+  <script> // render icons
+    try{ feather.replace(); } catch(e){ setTimeout(()=>{ try{ feather.replace(); } catch(e){} },200); }
+  </script>
 </body>
-
 </html>
