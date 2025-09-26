@@ -404,15 +404,38 @@
 
     // ---------- remote save/load ----------
     async function gsSaveAll(){
-      if(!USE_REMOTE) return false;
-      try{
-        const payload = { action:'saveAll', data:{ batches, customers, currentBatchId } };
-        const resp = await fetch(GS_URL, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(payload) });
-        const j = await resp.json();
-        if(j && j.ok){ console.log('gsSaveAll ok'); return true; }
-        else { console.warn('gsSaveAll server error', j); alert('Lưu lên Google Sheets thất bại: ' + (j && j.error ? j.error : 'Server error')); return false; }
-      } catch(err){ console.error('gsSaveAll error', err); alert('Lỗi khi lưu lên Google Sheets.'); return false; }
+  if(!USE_REMOTE) return false;
+  try{
+    const payloadObj = { batches, customers, currentBatchId };
+    const params = new URLSearchParams();
+    params.append('action', 'saveAll');
+    params.append('data', JSON.stringify({ data: payloadObj })); // note: doPost expects payload.data
+
+    const resp = await fetch(GS_URL, {
+      method: 'POST',
+      body: params, // Content-Type: application/x-www-form-urlencoded; charset=UTF-8 (browser set automatically)
+      // IMPORTANT: do NOT set custom headers (avoid preflight)
+    });
+
+    const text = await resp.text();
+    let j = {};
+    try { j = JSON.parse(text); } catch(e){ j = { ok:false, raw:text }; }
+
+    if(j && j.ok){
+      console.log('gsSaveAll ok');
+      return true;
+    } else {
+      console.warn('gsSaveAll server error', j);
+      alert('Lưu lên Google Sheets thất bại: ' + (j && j.error ? j.error : JSON.stringify(j)));
+      return false;
     }
+  } catch(err){
+    console.error('gsSaveAll error', err);
+    alert('Lỗi khi lưu lên Google Sheets. Kiểm tra console (F12).');
+    return false;
+  }
+}
+
 
     async function gsLoadAll(){
       if(!USE_REMOTE) return false;
@@ -563,3 +586,4 @@
   </script>
 </body>
 </html>
+
