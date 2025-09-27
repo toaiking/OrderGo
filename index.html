@@ -8,7 +8,7 @@
 
   <meta name="viewport" content="width=device-width,initial-scale=1" />
 
-  <title>OrderGo - Nhập liệu bán hàng (v6 - Load GS Priority)</title>
+  <title>OrderGo - Nhập liệu bán hàng (v8 - Tối ưu Form)</title>
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -48,7 +48,8 @@
 
     header{display:flex; flex-wrap:wrap; gap:16px; align-items:center; justify-content:space-between}
     h1{font-size:20px; margin:0}
-    .controls{display:flex; flex-wrap:wrap; gap:8px; align-items:center}
+    /* Controls giờ sẽ được ghi đè ở media query */
+    .controls{display:flex; flex-wrap:wrap; gap:8px; align-items:center} 
     h3 { font-size: 18px; margin: 0 0 10px 0; color: #334155; }
 
     /* Buttons */
@@ -87,6 +88,63 @@
     #itemsContainer > .row:last-child {
         border-bottom: none;
     }
+
+    /* Tối ưu bố cục form nhập đơn hàng */
+    #cardOrders .order-input-row {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 12px;
+    }
+    #cardOrders .order-input-row .col-name {
+        flex: 3; /* Tên khách hàng rộng hơn */
+    }
+    #cardOrders .order-input-row .col-addr {
+        flex: 4; /* Địa chỉ rộng nhất */
+    }
+    #cardOrders .order-input-row .col-phone {
+        flex: 2; /* SĐT nhỏ gọn */
+        max-width: 140px; /* Chiều rộng cố định cho SĐT trên màn hình lớn */
+        flex-shrink: 0;
+    }
+
+    /* Tối ưu bố cục form nhập sản phẩm */
+    #cardProducts .prod-input-row {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 10px;
+        align-items: center;
+    }
+    #cardProducts .prod-input-row .col-name {
+        flex: 3; 
+        max-width: 250px;
+    }
+    #cardProducts .prod-input-row .col-qty {
+        flex: 1; 
+        max-width: 100px;
+    }
+    #cardProducts .prod-input-row .col-price {
+        flex: 1; 
+        max-width: 150px;
+    }
+    #cardProducts .prod-input-row .col-action {
+        flex: 1;
+        max-width: 120px;
+        display: flex;
+        align-items: center;
+    }
+
+    /* Đồng bộ kích thước ICON trong nút */
+    i[data-feather] {
+        width: 16px;
+        height: 16px;
+        vertical-align: middle;
+    }
+    .btn.icon-only i[data-feather],
+    .icon-btn i[data-feather] {
+        width: 18px;
+        height: 18px;
+    }
+
 
     /* Tables */
     table{width:100%; border-collapse:collapse}
@@ -162,17 +220,69 @@
         opacity: 0;
     }
     
+    /* === FIX: Nút và Controls trên Mobile === */
     @media (max-width:900px){ 
         .row{flex-direction:column} 
-        .controls{flex-direction:column; align-items:flex-start} 
-        .main-grid {
-            grid-template-columns: 1fr; /* Chuyển sang 1 cột trên mobile */
-        }
-        .controls {
+        
+        /* 1. Thay đổi controls: Xếp ngang, 2 nút/hàng */
+        .controls{
+            display: flex;
+            flex-direction: row; 
+            align-items: center; 
+            flex-wrap: wrap;
+            gap: 8px;
             width: 100%;
         }
+        
+        /* 2. Các nút trong controls/customer-panel: 2 nút/hàng, tối ưu nhãn */
+        .controls > button, 
+        .controls > a,
+        div[style*="display:flex; gap:8px; margin-bottom: 12px;"] > button { /* Áp dụng cho nút Tải/Xóa khách */
+            flex-grow: 1; 
+            /* Tính toán để có 2 nút/hàng với khoảng cách 8px */
+            max-width: calc(50% - 4px); 
+            padding: 8px 10px; 
+            font-size: 0.9em;
+            text-align: center;
+        }
+
+        /* 3. Ẩn chữ để chỉ còn Icon (giúp nút gọn hơn) */
+        .controls .label-desktop { display: none; } 
+        .controls #btnDeleteBatch i, 
+        .controls #btnExportExcel i { margin: 0; }
+        
+        /* 4. Select Batch chiếm full 1 hàng */
+        .controls #selBatches {
+            min-width: 100%;
+            flex-grow: 1;
+            max-width: 100%;
+        }
+        
+        /* 5. Ghi đè CSS cũ làm tất cả chiếm 100% */
         .controls > * {
+            width: auto !important; 
+        }
+        
+        .main-grid {
+            grid-template-columns: 1fr; 
+        }
+
+        /* 6. Form nhập liệu: Chuyển các row thành cột trên mobile */
+        #cardOrders .order-input-row,
+        #cardProducts .prod-input-row {
+            flex-direction: column;
+            gap: 12px;
+        }
+        #cardOrders .order-input-row .col-name,
+        #cardOrders .order-input-row .col-addr,
+        #cardOrders .order-input-row .col-phone,
+        #cardProducts .prod-input-row .col-name,
+        #cardProducts .prod-input-row .col-qty,
+        #cardProducts .prod-input-row .col-price,
+        #cardProducts .prod-input-row .col-action {
+            max-width: 100%;
             width: 100%;
+            flex: 1;
         }
     }
   </style>
@@ -194,10 +304,10 @@
         </div>
         <div class="controls">
           <select id="selBatches" style="min-width:200px;"></select>
-          <button id="btnNewBatch" class="btn small important" title="Tạo mã đơn tổng"><i data-feather="plus"></i> Tạo mã</button>
+          <button id="btnNewBatch" class="btn small important" title="Tạo mã đơn tổng"><i data-feather="plus"></i> <span class="label-desktop">Tạo mã</span></button>
           <button id="btnDeleteBatch" class="btn small danger" title="Xóa mã đang chọn"><i data-feather="trash-2"></i></button>
           <button id="btnSave" class="btn small" title="Lưu local & gửi lên Google Sheets"><i data-feather="save"></i> <span id="saveLabel">Lưu</span></button>
-          <button class="btn secondary small" id="btnExportExcel"><i data-feather="file"></i> Excel</button>
+          <button class="btn secondary small" id="btnExportExcel"><i data-feather="file"></i> <span>Excel</span></button>
         </div>
       </header>
     </div>
@@ -206,10 +316,10 @@
         <div>
             <div class="card" id="cardOrders">
                 <h3>Bảng nhập đơn đặt hàng</h3>
-                <div class="row">
-                    <div class="col"><input list="customersDatalist" type="text" id="orderCustomer" placeholder="Khách hàng" autocomplete="off"/></div>
-                    <div class="col"><input type="text" id="orderAddress" placeholder="Địa chỉ" /></div>
-                    <div style="width:160px; flex:0 0 160px"><input type="text" id="orderPhone" placeholder="SĐT" /></div>
+                <div class="order-input-row">
+                    <div class="col-name"><input list="customersDatalist" type="text" id="orderCustomer" placeholder="Khách hàng" autocomplete="off"/></div>
+                    <div class="col-phone"><input type="text" id="orderPhone" placeholder="SĐT" /></div>
+                    <div class="col-addr"><input type="text" id="orderAddress" placeholder="Địa chỉ" /></div>
                 </div>
                 <datalist id="customersDatalist"></datalist>
 
@@ -256,11 +366,11 @@
 
             <div class="card" id="cardProducts">
                 <h3>Bảng danh sách hàng hóa</h3>
-                <div style="margin-bottom:10px" class="row">
-                    <div style="width:200px; flex:0 0 200px;"><input type="text" id="prodName" placeholder="Tên hàng" /></div>
-                    <div style="width:100px; flex:0 0 100px;"><input type="number" id="prodIn" placeholder="Nhập" min="0" /></div>
-                    <div style="width:140px; flex:0 0 140px;"><input type="number" id="prodPrice" placeholder="Giá bán (VND)" min="0" /></div>
-                    <div style="display:flex; align-items:center; flex:1"><button id="btnAddProd" class="btn small">Thêm hàng</button></div>
+                <div class="prod-input-row">
+                    <div class="col-name"><input type="text" id="prodName" placeholder="Tên hàng" /></div>
+                    <div class="col-qty"><input type="number" id="prodIn" placeholder="Nhập" min="0" /></div>
+                    <div class="col-price"><input type="number" id="prodPrice" placeholder="Giá bán (VND)" min="0" /></div>
+                    <div class="col-action"><button id="btnAddProd" class="btn small">Thêm hàng</button></div>
                 </div>
 
                 <table id="tblProducts">
@@ -292,6 +402,11 @@
                     <input type="file" id="uploadCustomers" accept=".xlsx,.csv" style="display:none;"/>
                 </div>
 
+                <div style="display:flex; gap:8px; margin-bottom: 12px;">
+                    <button id="btnLoadCustomers" class="btn small secondary" style="flex:1;"><i data-feather="download"></i> Tải GS</button>
+                    <button id="btnDeleteLocalCustomers" class="btn small danger" style="flex:1;"><i data-feather="x-circle"></i> Xóa Local</button>
+                </div>
+
                 <div id="customersPanel" class="customers-panel"></div>
                 <div style="margin-top:10px"><small class="muted">(Ấn 'Chọn' để điền nhanh thông tin vào form nhập đơn)</small></div>
             </div>
@@ -309,7 +424,7 @@
  <script>
     // ---------- CONFIG ----------
     // Thay URL của bạn vào đây (nếu sử dụng Google Sheets Script)
-    const GS_URL = 'https://script.google.com/macros/s/AKfycbz-1WXX8s2HEtYaNu11HR8S8pUzSgkb5nHq8KWMm-xoLfCmIssBsWQhIo-qjM03FbZK/exec'; 
+    const GS_URL = 'https://script.google.com/macros/s/AKfycbz6tYjkN3IrVa-I1gIBLMPGXGIK5IDJq9_5vhuRmy2rj1O8u3pWQqN9DO_4x-5JlmEF/exec'; 
     const USE_REMOTE = GS_URL && GS_URL.includes('script.google.com');
 
     // ---------- utils ----------
@@ -551,68 +666,139 @@
     // ---------- remote save/load ----------
     async function gsSaveAll(){ if(!USE_REMOTE) return false; try{ const payloadObj = { batches, customers, currentBatchId }; const params = new URLSearchParams(); params.append('action','saveAll'); params.append('data', JSON.stringify({ data: payloadObj })); const resp = await fetch(GS_URL, { method:'POST', body: params }); const text = await resp.text(); let j = {}; try{ j = JSON.parse(text); } catch(e){ j = { ok:false, raw:text }; } if(j && j.ok){ console.log('gsSaveAll ok'); return true; } else { console.warn('gsSaveAll server error', j); alert('Lưu lên Google Sheets thất bại: ' + (j && j.error ? j.error : JSON.stringify(j))); return false; } } catch(err){ console.error('gsSaveAll error', err); alert('Lỗi khi lưu lên Google Sheets. Kiểm tra console (F12).'); return false; } }
 
+    /**
+     * Tải Batches và Meta (currentBatchId) từ Google Sheet. Không tải Customers.
+     */
     async function gsLoadAll(){ 
-        if(!USE_REMOTE) return false; 
-        try{ 
-            showLoading('Đang tải dữ liệu khách hàng từ Google Sheets...');
+        if (!USE_REMOTE) return false;
+        try {
+            const params = new URLSearchParams();
+            params.append('action', 'readAll');
+            const resp = await fetch(GS_URL, {
+                method: 'POST', 
+                body: params
+            });
+            const text = await resp.text();
+            let j = {};
+            try { j = JSON.parse(text); } catch (e) { return false; }
 
-            const resp = await fetch(GS_URL + '?action=readAll'); 
-            const text = await resp.text(); 
-            
+            if (j && j.ok && j.data) {
+                const remote = j.data;
+                const remoteBatches = (remote.batches || []).map(rb => ({
+                    id: rb.id || rb.name,
+                    name: rb.name,
+                    products: rb.products || [],
+                    orders: rb.orders || [],
+                    timestamp: rb.timestamp
+                }));
+                if (remoteBatches.length) batches = remoteBatches;
+
+                currentBatchId = remote.currentBatchId || (batches[0] && batches[0].id) || currentBatchId;
+                return true;
+            }
+            return false;
+        } catch (err) {
+            return false;
+        }
+    }
+
+
+    /**
+     * Tải riêng danh sách khách hàng từ Google Sheet (Hàm mới)
+     */
+    async function loadCustomersFromGS() {
+        if (!USE_REMOTE) {
+            alert('Lỗi: URL Apps Script chưa được cấu hình.');
+            return false;
+        }
+        try {
+            showLoading('Đang tải danh sách khách hàng từ Google Sheets...');
+
+            const params = new URLSearchParams();
+            // Sử dụng action readAll để tải tất cả data (bao gồm customers)
+            params.append('action', 'readAll');
+
+            const resp = await fetch(GS_URL, {
+                method: 'POST', // Vẫn dùng POST để kết nối ổn định
+                body: params
+            });
+
+            const text = await resp.text();
+
             let j = {};
             try {
-                j = JSON.parse(text); // Thử phân tích cú pháp JSON
-            } catch(e) {
-                console.error("Phản hồi không phải JSON hợp lệ. Có thể là trang lỗi HTML.", text);
+                j = JSON.parse(text);
+            } catch (e) {
+                console.error("Phản hồi không phải JSON hợp lệ. Kiểm tra lại Logs trong Apps Script.", text);
                 throw new Error("Phản hồi từ Google Sheet không phải JSON.");
             }
-            
-            if(j && j.ok && j.data){ 
-                const remote = j.data; 
-                
-                // Cập nhật Batches (ưu tiên remote)
-                const remoteBatches = (remote.batches || []).map(rb => ({ id: rb.id || rb.name, name: rb.name, products: rb.products || [], orders: rb.orders || [], timestamp: rb.timestamp }));
-                if(remoteBatches.length) batches = remoteBatches;
-                
-                // Hợp nhất Customers (ưu tiên remote, sau đó thêm local mới)
-                const remoteCust = remote.customers || [];
+
+            if (j && j.ok && j.data) {
+                const remoteCust = j.data.customers || [];
                 const map = {};
-                
+
                 // 1. Thêm/Cập nhật khách hàng từ Remote
                 remoteCust.forEach(c => {
                     const key = lcName(c.name);
-                    map[key] = { name: c.name, address: c.address || '', phone: c.phone || '' };
+                    map[key] = {
+                        name: c.name,
+                        address: c.address || '',
+                        phone: c.phone || ''
+                    };
                 });
 
-                // 2. Hợp nhất với Local (chỉ thêm những người chưa có trong remote, hoặc giữ lại địa chỉ/sđt nếu remote bị trống)
-                customers.forEach(c => { 
-                    const key = lcName(c.name); 
-                    if(!map[key]){ 
-                        map[key] = { name: c.name, address: c.address || '', phone: c.phone || '' }; 
+                // 2. Hợp nhất với Local (chỉ thêm khách hàng local chưa có trong remote)
+                customers.forEach(c => {
+                    const key = lcName(c.name);
+                    if (!map[key]) {
+                        map[key] = {
+                            name: c.name,
+                            address: c.address || '',
+                            phone: c.phone || ''
+                        };
                     } else {
+                        // Giữ data remote nhưng bổ sung thông tin local nếu remote thiếu
                         if (!map[key].address && c.address) map[key].address = c.address;
                         if (!map[key].phone && c.phone) map[key].phone = c.phone;
                     }
                 });
-                
-                // Gán lại mảng customers đã được merge/ưu tiên từ remote
-                customers = Object.values(map); 
-                console.log(`[gsLoadAll] Đã tải và hợp nhất ${customers.length} khách hàng.`);
-                
-                currentBatchId = remote.currentBatchId || (batches[0] && batches[0].id) || currentBatchId;
 
-                persistAll(); // Ghi dữ liệu đã load (và merge) vào Local Storage
-                
-                return true; 
-            } 
-            console.warn('gsLoadAll: Server returned invalid data or not ok.', j);
-            return false; 
-        } catch(err){ 
-            console.error('gsLoadAll error', err); 
-            alert('Lỗi khi tải dữ liệu từ Google Sheets: ' + err.message + '. Đang sử dụng dữ liệu local.');
-            return false; 
+                customers = Object.values(map);
+                alert(`Đã tải và hợp nhất thành công ${remoteCust.length} khách hàng từ Google Sheet.`);
+
+                // Cập nhật batches và currentBatchId nếu có (từ cùng phản hồi)
+                batches = j.data.batches || batches;
+                currentBatchId = j.data.currentBatchId || (batches[0] && batches[0].id) || currentBatchId;
+
+
+                persistAll();
+                renderAll();
+                return true;
+            }
+            console.warn('loadCustomersFromGS: Server returned invalid data or not ok.', j);
+            alert('Lỗi: Server Google Sheet trả về dữ liệu không hợp lệ hoặc lỗi.');
+            return false;
+        } catch (err) {
+            console.error('loadCustomersFromGS error', err);
+            alert('Lỗi khi tải dữ liệu từ Google Sheets: ' + err.message);
+            return false;
         } finally {
-             hideLoading(); 
+            hideLoading();
+        }
+    }
+
+
+    // Hàm xóa toàn bộ khách hàng Local (Yêu cầu mới)
+    function deleteLocalCustomers() {
+        if (customers.length === 0) {
+            alert('Danh sách khách hàng local đã trống.');
+            return;
+        }
+        if (confirm(`Bạn có chắc muốn XÓA TOÀN BỘ ${customers.length} khách hàng đang lưu trong trình duyệt (Local Storage)? Hành động này không thể hoàn tác.`)) {
+            customers = [];
+            persistAll();
+            renderAll();
+            alert('Đã xóa toàn bộ khách hàng local thành công. Hãy bấm "Lưu" để đồng bộ lên Google Sheets (nếu bạn muốn xóa cả trên đó).');
         }
     }
 
@@ -669,7 +855,17 @@
         }); 
     }
 
-    function updateCustomersDatalist(){ const dl = $('customersDatalist'); dl.innerHTML=''; customers.forEach(c => { const o = document.createElement('option'); o.value = c.name; dl.appendChild(o); }); }
+    // FIX GỢI Ý KHÁCH HÀNG: Đưa SĐT và Địa chỉ vào value để hiển thị trong datalist
+    function updateCustomersDatalist(){ 
+        const dl = $('customersDatalist'); 
+        dl.innerHTML=''; 
+        customers.forEach(c => { 
+            const o = document.createElement('option'); 
+            // Hiển thị đầy đủ thông tin để người dùng dễ chọn
+            o.value = `${c.name} | SĐT: ${c.phone} | Đ/c: ${c.address}`; 
+            dl.appendChild(o); 
+        }); 
+    }
 
     // ---------- delegated handlers for table buttons ----------
     function attachDelegatedTableHandlers(){ 
@@ -775,6 +971,10 @@
         $('btnAddOrder').addEventListener('click', addOrderFromForm); 
         $('btnSave').addEventListener('click', saveLocal); 
         $('btnExportExcel').addEventListener('click', exportExcel); 
+
+        // HANDLER CHO NÚT MỚI
+        $('btnLoadCustomers').addEventListener('click', loadCustomersFromGS);
+        $('btnDeleteLocalCustomers').addEventListener('click', deleteLocalCustomers);
         
         $('toggleCustomers').addEventListener('click', ()=>{ 
             const panel = $('customersPanel');
@@ -789,16 +989,49 @@
         if(cs){ 
             cs.addEventListener('input',(ev)=>{ 
                 const q = ev.target.value; 
-                const found = customers.filter(c => (c.name||'').toLowerCase().includes(q.toLowerCase()) || (c.phone||'').toLowerCase().includes(q.toLowerCase())); 
-                if(found.length){ 
-                    const c = found[0]; 
-                    $('orderCustomer').value = c.name; 
-                    $('orderAddress').value = c.address; 
-                    $('orderPhone').value = c.phone; 
-                } 
+                // CHỈ LỌC BẢNG KHÁCH HÀNG
                 renderCustomersPanel(q);
             }); 
         }
+
+        // TỰ ĐỘNG ĐIỀN VÀO FORM KHI CHỌN/NHẬP TÊN KHÁCH HÀNG
+        $('orderCustomer').addEventListener('input', (e) => {
+            const fullValue = e.target.value;
+            
+            // 1. Logic cho Datalist Selection (khi giá trị có dấu '|')
+            if (fullValue.includes('|')) {
+                const parts = fullValue.split(' | ');
+                const name = parts[0].trim(); // Lấy tên khách hàng
+                
+                // Tìm khách hàng trong mảng customers
+                const c = customers.find(cust => lcName(cust.name) === lcName(name));
+
+                if (c) {
+                    $('orderAddress').value = c.address;
+                    $('orderPhone').value = c.phone;
+                    // Cập nhật giá trị input chỉ còn Tên khách hàng (để form chỉ lưu tên)
+                    e.target.value = c.name; 
+                    currentCustomerIndex = customers.findIndex(cust => lcName(cust.name) === lcName(name));
+                }
+                return; // Dừng lại sau khi xử lý datalist selection
+            } 
+            
+            // 2. Logic cho Typing (Tìm nhanh) - Khi giá trị không có dấu '|'
+            const q = fullValue.toLowerCase();
+            // Tìm khách hàng có tên hoặc SĐT khớp với chuỗi đang gõ (Ưu tiên người đầu tiên tìm thấy)
+            const found = customers.find(cust => 
+                (cust.name||'').toLowerCase().includes(q) || 
+                (cust.phone||'').toLowerCase().includes(q)
+            );
+            
+            // Tự động điền Địa chỉ/SĐT nếu tìm thấy
+            if(found){ 
+                $('orderAddress').value = found.address; 
+                $('orderPhone').value = found.phone; 
+                currentCustomerIndex = customers.findIndex(cust => lcName(cust.name) === lcName(found.name));
+            }
+        });
+        // END TỰ ĐỘNG ĐIỀN
 
         $('btnCustomerFirst').addEventListener('click', ()=>{ if(customers.length===0) return; currentCustomerIndex = currentCustomerIndex <= 0 ? 0 : currentCustomerIndex-1; const c = customers[currentCustomerIndex]; if(c){ $('orderCustomer').value=c.name; $('orderAddress').value=c.address; $('orderPhone').value=c.phone; } });
 
@@ -835,11 +1068,10 @@
         loadLocal();
         console.log(`[initApp] Load Local: ${customers.length} khách hàng.`);
 
-        // 2. Tải dữ liệu từ Google Sheets
+        // 2. Tải dữ liệu Batches/Meta từ Google Sheets
         if (USE_REMOTE) {
-            // gsLoadAll sẽ cập nhật customers và batches, sau đó persistAll
+            // Chỉ load batches và currentBatchId từ GS. KHÔNG load customers ở đây.
             await gsLoadAll(); 
-            console.log(`[initApp] Sau gsLoadAll: ${customers.length} khách hàng.`);
         }
         
         // 3. Đảm bảo có batch (dùng dữ liệu đã được cập nhật/merge)
@@ -872,3 +1104,4 @@
     window.ordergo = { batches, customers, persistAll, gsSaveAll, gsLoadAll };
 
   </script>
+</html>
