@@ -8,7 +8,7 @@
 
   <meta name="viewport" content="width=device-width,initial-scale=1" />
 
-  <title>OrderGo - Nhập liệu bán hàng (v10 - Fix + Ghi chú)</title>
+  <title>OrderGo - Nhập liệu bán hàng</title>
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -146,7 +146,6 @@
         #cardProducts .prod-input-row .col-name, #cardProducts .prod-input-row .col-qty, #cardProducts .prod-input-row .col-price, #cardProducts .prod-input-row .col-action { max-width: 100%; width: 100%; flex: 1; }
     }
 
-    /* make orders table horizontally scrollable when wide */
     .table-wrap { display:block; overflow-x:auto; }
   </style>
 
@@ -188,7 +187,6 @@
 
                 <div id="itemsContainer" style="margin-top:12px; border-top:1px solid var(--border-light); padding-top:12px;"></div>
 
-                <!-- Added Note field -->
                 <div style="margin-top:12px;">
                     <textarea id="orderNote" placeholder="Ghi chú đơn hàng (nội dung sẽ xuất hiện trong danh sách đơn)"></textarea>
                 </div>
@@ -203,6 +201,7 @@
                 
                 <div style="margin-top:10px; display:flex; gap:8px;">
                     <button id="btnAddOrder" class="btn important">Thêm đơn</button>
+                    <button id="btnCancelEdit" class="btn secondary" style="display: none;">Hủy sửa</button>
                 </div>
             </div>
 
@@ -327,7 +326,19 @@
     function addItemRow(prefName = '', prefQty = 1){ const row=document.createElement('div'); row.className='row'; const sel=document.createElement('select'); sel.className='item-select'; sel.style.flex = '1'; const inpQty=document.createElement('input'); inpQty.type='number'; inpQty.min=1; inpQty.value = prefQty; inpQty.className = 'item-qty'; inpQty.style.width='100px'; inpQty.style.flex = '0 0 100px'; inpQty.style.marginRight = '8px'; const btnDel=document.createElement('button'); btnDel.className='btn small ghost icon-only'; btnDel.type='button'; btnDel.innerHTML='<i data-feather="trash-2"></i>'; btnDel.title='Xóa'; btnDel.style.flex = '0 0 40px'; row.appendChild(sel); row.appendChild(inpQty); row.appendChild(btnDel); itemsContainer.appendChild(row); btnDel.addEventListener('click', ()=>{ row.remove(); updateOrderTotal(); }); sel.addEventListener('change', ()=>updateOrderTotal()); inpQty.addEventListener('input', ()=>updateOrderTotal()); refreshItemSelectOptions(); if(prefName) sel.value=prefName; ensureIcons(); return row; }
     function updateOrderTotal(){ const rows = Array.from(itemsContainer.children); let total=0; rows.forEach(r=>{ const sel=r.querySelector('select'); const qty=Number(r.querySelector('input[type=number]').value||0); const prod = getCurrentBatch() ? getCurrentBatch().products.find(p=>p.name===sel.value) : null; if(prod) total += Number(prod.price||0)*qty; }); $('orderTotal').textContent = fmtCurrency(total); return total; }
     
-    function resetOrderForm() { $('orderCustomer').value=''; $('orderAddress').value=''; $('orderPhone').value=''; $('orderNote').value=''; itemsContainerClear(); addItemRow('',1); addItemRow('',1); $('orderTotal').textContent = fmtCurrency(0); editingOrderIndex = null; $('btnAddOrder').textContent = 'Thêm đơn'; }
+    function resetOrderForm() { 
+        $('orderCustomer').value=''; 
+        $('orderAddress').value=''; 
+        $('orderPhone').value=''; 
+        $('orderNote').value=''; 
+        itemsContainerClear(); 
+        addItemRow('',1); 
+        addItemRow('',1); 
+        $('orderTotal').textContent = fmtCurrency(0); 
+        editingOrderIndex = null; 
+        $('btnAddOrder').textContent = 'Thêm đơn'; 
+        $('btnCancelEdit').style.display = 'none';
+    }
 
     function createNewBatchPrompt(){ let name = prompt('Tên mã đơn tổng:', ''); if(name===null) return; name = String(name||'').trim(); const d=new Date(); const pad=n=>String(n).padStart(2,'0'); const prefix = `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}`; let final = name ? `${prefix}_${name}` : `${prefix}`; const sanitized = sanitizeForSheetName(final); if(sanitized !== final){ if(!confirm(`Tên sẽ được chuẩn hóa: ${sanitized}\nBạn đồng ý?`)) return; final = sanitized; } else final = sanitized; const id = uid('batch'); const b = { id, name: final, products: [], orders: [], timestamp: new Date().toISOString() }; batches.unshift(b); currentBatchId = id; persistAll(); renderAll(); alert(`Đã tạo batch: ${final}`); }
     function addProductFromForm(){ const name=$('prodName').value.trim(); if(!name){ alert('Tên hàng không được trống'); return; } const pin=Number($('prodIn').value||0); const price=Number($('prodPrice').value||0); const b=getCurrentBatch(); if(!b){ alert('Chọn hoặc tạo mã đơn tổng trước'); return; } if(b.products.some(p => lcName(p.name) === lcName(name))) { alert(`Sản phẩm "${name}" đã tồn tại.`); return; } b.products.push({ name, in: pin, sold:0, remain: pin, price }); $('prodName').value=''; $('prodIn').value=''; $('prodPrice').value=''; persistAll(); renderProducts(); }
@@ -336,7 +347,6 @@
     function addOrUpdateOrderFromForm(){ const b=getCurrentBatch(); if(!b){ alert('Chọn mã đơn tổng trước'); return; } const customer=$('orderCustomer').value.trim(); const address=$('orderAddress').value.trim(); const phone=$('orderPhone').value.trim(); const note=$('orderNote').value.trim(); if(!customer){ alert('Nhập tên khách hàng'); return; } const items=[]; Array.from(itemsContainer.children).forEach(r=>{ const name=r.querySelector('select').value; const qty=Number(r.querySelector('input[type=number]').value||0); if(name && qty>0) items.push({ name, qty }); }); if(items.length===0 && editingOrderIndex === null){ alert('Phải có ít nhất 1 mặt hàng.'); return; } const total=updateOrderTotal(); const newOrder={ customer, address, phone, note, items, total, created:new Date().toISOString() };
 
       const bcur = b;
-      // If editing, revert sold counts from old order first
       if (editingOrderIndex !== null) {
         const oldOrder = bcur.orders[editingOrderIndex];
         if (oldOrder && Array.isArray(oldOrder.items)) {
@@ -347,13 +357,11 @@
             }
           });
         }
-        // Replace old order with new one
         bcur.orders.splice(editingOrderIndex, 1, newOrder);
       } else {
         bcur.orders.push(newOrder);
       }
 
-      // Add sold counts from new order
       items.forEach(it=>{ const p = bcur.products.find(pp => pp.name===it.name); if(p){ p.sold = (p.sold||0) + Number(it.qty); } });
       bcur.products.forEach(p => { p.remain = (p.in || 0) - (p.sold || 0); });
 
@@ -361,10 +369,92 @@
       if(custIdx === -1){ customers.unshift({ name: customer, address, phone }); } else { customers[custIdx].address = address; customers[custIdx].phone = phone; }
 
       resetOrderForm(); persistAll(); renderAll(); }
-
-    function editProduct(index){ const b=getCurrentBatch(); if(!b) return; const p=b.products[index]; const newName=prompt('Tên hàng', p.name); if(newName===null) return; p.name=newName; p.in=Number(prompt('Nhập', p.in)||p.in); p.price=Number(prompt('Giá bán', p.price)||p.price); p.remain = p.in - (p.sold||0); persistAll(); renderProducts(); }
     
-    // ========== FIXED FUNCTION ==========
+    // ========== SECTION START: CODE FIX FOR DATA SYNC ==========
+
+    /**
+     * Helper function to update product name references in all orders.
+     * This is crucial when a product's name is edited.
+     */
+    function updateProductNameInOrders(oldName, newName) {
+        const b = getCurrentBatch();
+        if (!b || !oldName || !newName || oldName === newName) return;
+
+        b.orders.forEach(order => {
+            if (Array.isArray(order.items)) {
+                order.items.forEach(item => {
+                    if (item.name === oldName) {
+                        item.name = newName;
+                    }
+                });
+            }
+        });
+    }
+
+    /**
+     * Helper function to recalculate all order totals based on current product prices.
+     * This ensures that any price change is reflected across all existing orders.
+     */
+    function recalculateAllOrderTotals() {
+        const b = getCurrentBatch();
+        if (!b) return;
+
+        b.orders.forEach(order => {
+            let newTotal = 0;
+            if (Array.isArray(order.items)) {
+                order.items.forEach(item => {
+                    const product = b.products.find(p => p.name === item.name);
+                    if (product) {
+                        newTotal += (Number(product.price) || 0) * (Number(item.qty) || 0);
+                    }
+                });
+            }
+            order.total = newTotal;
+        });
+    }
+
+    /**
+     * MODIFIED function to handle product editing.
+     * Now ensures data consistency across the application after an edit.
+     */
+    function editProduct(index) {
+        const b = getCurrentBatch();
+        if (!b) return;
+        const p = b.products[index];
+        if (!p) return;
+
+        const oldName = p.name; // Store old name before any changes
+
+        const newName = prompt('Tên hàng', p.name);
+        if (newName === null) return; // User cancelled
+
+        const newIn = prompt('Nhập', p.in);
+        if (newIn === null) return;
+
+        const newPrice = prompt('Giá bán', p.price);
+        if (newPrice === null) return;
+        
+        // 1. Update product details in the products array
+        p.name = newName.trim();
+        p.in = Number(newIn) || 0;
+        p.price = Number(newPrice) || 0;
+        p.remain = p.in - (p.sold || 0);
+
+        // 2. If product name changed, update all existing orders that reference it.
+        if (oldName !== p.name) {
+            updateProductNameInOrders(oldName, p.name);
+        }
+        
+        // 3. Recalculate totals for ALL orders to reflect potential price changes.
+        recalculateAllOrderTotals();
+
+        // 4. Persist all changes and re-render the entire interface for consistency.
+        persistAll();
+        renderAll(); // Use renderAll() to update both products and orders tables.
+    }
+
+    // ========== SECTION END: CODE FIX ==========
+
     function editOrder(index){ 
         const b = getCurrentBatch(); 
         if (!b) return; 
@@ -379,20 +469,18 @@
         $('orderNote').value = o.note || '';
         itemsContainerClear(); 
 
-        // Handle orders with items
         if(Array.isArray(o.items) && o.items.length > 0) {
             o.items.forEach(it => addItemRow(it.name, it.qty)); 
         } else { 
-            // Add default rows if order has no items or items property is malformed
             addItemRow('',1); 
             addItemRow('',1); 
         } 
         
         updateOrderTotal(); 
         $('btnAddOrder').textContent = 'Cập nhật đơn';
+        $('btnCancelEdit').style.display = 'inline-flex';
         $('orderCustomer').focus();
     }
-    // ===================================
 
     function deleteBatch(id){ if(!id) return; const bidx = batches.findIndex(b=>b.id===id); if(bidx===-1) return; if(!confirm('Xóa mã này? Hành động không thể hoàn tác.')) return; batches.splice(bidx,1); currentBatchId = batches[0] ? batches[0].id : null; persistAll(); renderAll(); }
     
@@ -402,72 +490,66 @@
     function deleteLocalCustomers() { if (customers.length === 0) { alert('Danh sách khách hàng local đã trống.'); return; } if (confirm(`Xóa toàn bộ ${customers.length} khách hàng trong trình duyệt?`)) { customers = []; persistAll(); renderAll(); alert('Đã xóa. Bấm "Lưu" để đồng bộ lên Google Sheets.'); } }
 
     function handleUploadCustomers(file){ const reader = new FileReader(); reader.onload = function(e){ const data = e.target.result; let workbook = null; try{ workbook = XLSX.read(data, {type:'binary'}); } catch(ex){ try{ workbook = XLSX.read(data, {type:'string'}); } catch(e2){ alert('Không đọc được file'); return; } } const firstSheetName = workbook.SheetNames[0]; const ws = workbook.Sheets[firstSheetName]; const arr = XLSX.utils.sheet_to_json(ws, { header:1 }); let added=0, updated=0; arr.slice(1).forEach(r => { const name = (r[0] || '').toString().trim(); const addr = (r[1] || '').toString().trim(); const phone = (r[2] || '').toString().trim(); if(!name) return; const key = lcName(name); const idx = customers.findIndex(c => lcName(c.name) === key); if(idx === -1){ customers.unshift({ name, address: addr, phone }); added++; } else { customers[idx].address = addr; customers[idx].phone = phone; updated++; } }); persistAll(); renderCustomersPanel(); updateCustomersDatalist(); alert(`Import hoàn tất. Thêm: ${added}, Cập nhật: ${updated}`); }; reader.readAsBinaryString(file); }
-    function exportExcel(){
-  if (typeof XLSX === 'undefined') {
-    alert('Lỗi: Thư viện xuất Excel chưa được tải. Vui lòng kiểm tra kết nối mạng và thử lại.');
-    return;
-  }
-  try{
-    const currentB = getCurrentBatch();
-    if(!currentB){ alert('Chưa chọn batch để xuất.'); return; }
-
-    const wb = XLSX.utils.book_new();
-
-    // Products sheet
-    const prodRows = [['Tên hàng', 'Nhập', 'Đã bán', 'Tồn', 'Giá bán']].concat(
-      (currentB.products || []).map(p => [p.name, p.in, p.sold, p.remain, p.price])
-    );
-    const wsP = XLSX.utils.aoa_to_sheet(prodRows);
-    XLSX.utils.book_append_sheet(wb, wsP, 'Products_' + sanitizeForSheetName(currentB.name));
-
-    // Orders sheet (safely normalize items)
-    const orderHeaders = ['Thời gian','Khách hàng', 'Địa chỉ', 'SĐT', 'Ghi chú', 'Tổng tiền', 'Danh sách hàng'];
-    const orderRows = (currentB.orders || []).map(o => {
-      // Normalize items to an array safely (accept Array, string, or object)
-      let itemsArr = [];
-      try {
-        if (Array.isArray(o.items)) {
-          itemsArr = o.items;
-        } else if (typeof o.items === 'string' && o.items.trim() !== '') {
-          // split common separators ; , <br> newline
-          const parts = o.items.split(/;|<br\s*\/?>|,|\n/).map(s => s.trim()).filter(Boolean);
-          itemsArr = parts.map(p => {
-            const m = p.match(/(.+?)\s*x\s*(\d+)$/i);
-            if (m) return { name: m[1].trim(), qty: Number(m[2]) };
-            return { name: p, qty: '' };
-          });
-        } else if (o.items && typeof o.items === 'object') {
-          itemsArr = Object.values(o.items).map(it => {
-            const name = it && (it.name || it.product) ? (it.name || it.product) : String(it);
-            const qty = it && (it.qty || it.count) ? (it.qty || it.count) : '';
-            return { name, qty };
-          });
-        } else {
-          itemsArr = [];
+    
+    function exportExcel() {
+        if (typeof XLSX === 'undefined') {
+            alert('Lỗi: Thư viện xuất Excel chưa được tải. Vui lòng kiểm tra kết nối mạng và thử lại.');
+            return;
         }
-      } catch(e) {
-        itemsArr = [];
-      }
+        try {
+            const currentB = getCurrentBatch();
+            if (!currentB) {
+                alert('Chưa chọn batch để xuất.');
+                return;
+            }
 
-      const itemDetails = (itemsArr || []).map(i => `${i.name} x${i.qty}`).join('; ');
-      return [o.created, o.customer, o.address, o.phone, o.note||'', o.total, itemDetails];
-    });
+            const wb = XLSX.utils.book_new();
 
-    const wsO = XLSX.utils.aoa_to_sheet([orderHeaders].concat(orderRows));
-    XLSX.utils.book_append_sheet(wb, wsO, 'Orders_' + sanitizeForSheetName(currentB.name));
+            const prodRows = [['Tên hàng', 'Nhập', 'Đã bán', 'Tồn', 'Giá bán']].concat(
+                (currentB.products || []).map(p => [p.name, p.in, p.sold, p.remain, p.price])
+            );
+            const wsP = XLSX.utils.aoa_to_sheet(prodRows);
+            XLSX.utils.book_append_sheet(wb, wsP, 'Products_' + sanitizeForSheetName(currentB.name));
 
-    XLSX.writeFile(wb, `ordergo_export_${new Date().toISOString().slice(0,10)}.xlsx`);
-  } catch(e){
-    console.error(e);
-    alert('Lỗi khi xuất Excel: ' + e.message);
-  }
-}
+            const allProductNames = (currentB.products || []).map(p => p.name);
+            const orderHeaders = ['STT', 'Tổng tiền', 'Khách hàng', 'Địa chỉ', 'Số điện thoại', 'Ghi chú'].concat(allProductNames);
 
+            const orderRows = (currentB.orders || []).map((o, index) => {
+                const itemMap = new Map();
+                if (Array.isArray(o.items)) {
+                    o.items.forEach(item => {
+                        itemMap.set(item.name, item.qty);
+                    });
+                }
+                const row = [
+                    index + 1,
+                    o.total || 0,
+                    o.customer || '',
+                    o.address || '',
+                    o.phone || '',
+                    o.note || ''
+                ];
+                allProductNames.forEach(prodName => {
+                    row.push(itemMap.get(prodName) || '');
+                });
+
+                return row;
+            });
+
+            const wsO = XLSX.utils.aoa_to_sheet([orderHeaders].concat(orderRows));
+            XLSX.utils.book_append_sheet(wb, wsO, 'Orders_' + sanitizeForSheetName(currentB.name));
+
+            XLSX.writeFile(wb, `ordergo_export_${currentB.name}_${new Date().toISOString().slice(0,10)}.xlsx`);
+        } catch (e) {
+            console.error(e);
+            alert('Lỗi khi xuất Excel: ' + e.message);
+        }
+    }
     
     function renderCustomersPanel(searchQuery = ''){ const panel = $('customersPanel'); panel.innerHTML=''; const q = searchQuery.toLowerCase(); const listToRender = customers.filter(c => !q || (c.name||'').toLowerCase().includes(q) || (c.phone||'').toLowerCase().includes(q)); if(!listToRender.length){ panel.innerHTML = `<div class="small muted" style="padding:16px;">(Không tìm thấy khách hàng)</div>`; return; } listToRender.forEach((c) => { const row = document.createElement('div'); row.className='customer-row'; const left = document.createElement('div'); left.innerHTML = `<div><strong>${c.name}</strong><div class="small muted">${c.address} • ${c.phone}</div></div>`; const right = document.createElement('div'); const btnPick = document.createElement('button'); btnPick.className='btn small secondary'; btnPick.textContent='Chọn'; btnPick.addEventListener('click', ()=>{ $('orderCustomer').value=c.name; $('orderAddress').value=c.address; $('orderPhone').value=c.phone; }); const btnDel = document.createElement('button'); btnDel.className='btn small danger'; btnDel.style.marginLeft='8px'; btnDel.textContent='Xóa'; btnDel.addEventListener('click', ()=>{ if(!confirm('Xóa khách này?')) return; const globalIndex = customers.findIndex(cust => lcName(cust.name) === lcName(c.name)); if (globalIndex > -1) customers.splice(globalIndex,1); persistAll(); renderCustomersPanel(); updateCustomersDatalist(); }); right.appendChild(btnPick); right.appendChild(btnDel); row.appendChild(left); row.appendChild(right); panel.appendChild(row); }); }
     function updateCustomersDatalist(){ const dl = $('customersDatalist'); dl.innerHTML=''; customers.forEach(c => { const o = document.createElement('option'); o.value = `${c.name} | SĐT: ${c.phone} | Đ/c: ${c.address}`; dl.appendChild(o); }); }
 
-    function attachDelegatedTableHandlers(){ const prodTbody = document.querySelector('#tblProducts tbody'); if(prodTbody && !prodTbody._hasDelegation){ prodTbody.addEventListener('click', function(e){ const btn = e.target.closest('button[data-action]'); if(!btn) return; const action = btn.getAttribute('data-action'); const idx = Number(btn.dataset.idx); if(action === 'delete'){ if(confirm('Xóa sản phẩm?')){ const b = getCurrentBatch(); if(!b) return; b.products.splice(idx,1); persistAll(); renderProducts(); } } else if(action === 'edit'){ editProduct(idx); } }); prodTbody._hasDelegation = true; } const orderTbody = document.querySelector('#tblOrders tbody'); if(orderTbody && !orderTbody._hasDelegation){ orderTbody.addEventListener('click', function(e){ const btn = e.target.closest('button[data-action]'); if(!btn) return; const action = btn.getAttribute('data-action'); const idx = Number(btn.dataset.idx); if(action === 'del-order'){ if(confirm('Xóa đơn này?')){ const b = getCurrentBatch(); if(!b) return; const deletedOrder = b.orders[idx]; if (deletedOrder && Array.isArray(deletedOrder.items)) { deletedOrder.items.forEach(item => { const p = b.products.find(prod => prod.name === item.name); if (p) { p.sold = Math.max(0, (p.sold || 0) - item.qty); p.remain = p.in - p.sold; } }); } b.orders.splice(idx,1); persistAll(); renderOrders(); renderProducts(); } } else if(action === 'edit-order'){ editOrder(idx); } }); orderTbody._hasDelegation = true; } }
+    function attachDelegatedTableHandlers(){ const prodTbody = document.querySelector('#tblProducts tbody'); if(prodTbody && !prodTbody._hasDelegation){ prodTbody.addEventListener('click', function(e){ const btn = e.target.closest('button[data-action]'); if(!btn) return; const action = btn.getAttribute('data-action'); const idx = Number(btn.dataset.idx); if(action === 'delete'){ if(confirm('Xóa sản phẩm?')){ const b = getCurrentBatch(); if(!b) return; b.products.splice(idx,1); persistAll(); renderAll(); } } else if(action === 'edit'){ editProduct(idx); } }); prodTbody._hasDelegation = true; } const orderTbody = document.querySelector('#tblOrders tbody'); if(orderTbody && !orderTbody._hasDelegation){ orderTbody.addEventListener('click', function(e){ const btn = e.target.closest('button[data-action]'); if(!btn) return; const action = btn.getAttribute('data-action'); const idx = Number(btn.dataset.idx); if(action === 'del-order'){ if(confirm('Xóa đơn này?')){ const b = getCurrentBatch(); if(!b) return; const deletedOrder = b.orders[idx]; if (deletedOrder && Array.isArray(deletedOrder.items)) { deletedOrder.items.forEach(item => { const p = b.products.find(prod => prod.name === item.name); if (p) { p.sold = Math.max(0, (p.sold || 0) - item.qty); p.remain = p.in - p.sold; } }); } b.orders.splice(idx,1); persistAll(); renderOrders(); renderProducts(); } } else if(action === 'edit-order'){ editOrder(idx); } }); orderTbody._hasDelegation = true; } }
 
     function attachHandlers(){ 
         $('btnNewBatch').addEventListener('click', createNewBatchPrompt); 
@@ -484,6 +566,8 @@
         $('customerSearch').addEventListener('input',(ev)=>{ renderCustomersPanel(ev.target.value); });
         $('orderCustomer').addEventListener('input', (e) => { const fullValue = e.target.value; if (fullValue.includes('|')) { const parts = fullValue.split(' | '); const name = parts[0].trim(); const c = customers.find(cust => lcName(cust.name) === lcName(name)); if (c) { $('orderAddress').value = c.address; $('orderPhone').value = c.phone; e.target.value = c.name; } return; } });
         $('btnDeleteBatch').addEventListener('click', ()=>{ if(!currentBatchId){ alert('Chưa chọn mã đơn tổng.'); return; } deleteBatch(currentBatchId); });
+        $('btnCancelEdit').addEventListener('click', resetOrderForm);
+        
         attachDelegatedTableHandlers(); 
     }
 
