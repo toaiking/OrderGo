@@ -1,23 +1,17 @@
 <!doctype html>
-
 <html lang="vi">
-
 <head>
-
   <meta charset="utf-8" />
-
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-
-  <title>OrderGo - Nhập liệu bán hàng</title>
-
+  <title>OrderGo - Nhập liệu bán hàng </title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-
   <style>
+    /* (giữ nguyên CSS từ bản gốc) */
     :root{ 
         --bg:#f8fafc; 
         --card:#ffffff; 
-        --accent:#2f9e8f; /* Teal */
+        --accent:#2f9e8f; 
         --accent-2:#1f7a6f; 
         --muted:#6b7280; 
         --danger:#e55353;
@@ -27,7 +21,6 @@
         font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans"; 
         font-size: 15px;
     }
-
     body{background:var(--bg); padding:16px; margin:0;}
     .wrap{max-width:1300px; margin:0 auto;}
     .card{
@@ -37,19 +30,11 @@
         padding:var(--pad); 
         margin-bottom:16px;
     }
-    
-    .main-grid {
-        display: grid;
-        grid-template-columns: 2fr 1fr;
-        gap: 16px;
-        align-items: start;
-    }
-
+    .main-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; align-items: start; }
     header{display:flex; flex-wrap:wrap; gap:16px; align-items:center; justify-content:space-between}
     h1{font-size:20px; margin:0}
     .controls{display:flex; flex-wrap:wrap; gap:8px; align-items:center} 
     h3 { font-size: 18px; margin: 0 0 10px 0; color: #334155; }
-
     .btn{display:inline-flex; gap:6px; align-items:center; justify-content:center; background:var(--accent); color:white; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; font-weight:600; transition: background 0.2s}
     .btn:hover{background:var(--accent-2)}
     .btn.icon-only{padding:8px; width:40px; height:40px}
@@ -58,52 +43,30 @@
     .btn.ghost{background:transparent; color:var(--muted); border:1px solid transparent;}
     .btn.important{box-shadow:0 4px 10px rgba(47,158,143,0.18);}
     .btn.danger{background:var(--danger)}
-
-    input[type=text], input[type=date], input[type=number], select, textarea { 
-        padding:8px 10px; 
-        border-radius:6px; 
-        border:1px solid var(--border-light); 
-        width:100%; 
-        box-sizing:border-box;
-        transition: border-color 0.2s;
-    }
+    input[type=text], input[type=date], input[type=number], select, textarea { padding:8px 10px; border-radius:6px; border:1px solid var(--border-light); width:100%; box-sizing:border-box; transition: border-color 0.2s; }
     textarea{ min-height:80px; resize:vertical }
-    input:focus, select:focus {
-        border-color: var(--accent);
-        outline: none;
-    }
+    input:focus, select:focus { border-color: var(--accent); outline: none; }
     .row{display:flex; gap:12px}
     .col{flex:1}
-    
-    #itemsContainer > .row {
-        align-items: center;
-        margin-bottom: 8px;
-        padding-bottom: 4px;
-        border-bottom: 1px dashed rgba(0,0,0,0.05);
-    }
+    #itemsContainer > .row { align-items: center; margin-bottom: 8px; padding-bottom: 4px; border-bottom: 1px dashed rgba(0,0,0,0.05); }
     #itemsContainer > .row:last-child { border-bottom: none; }
-
     #cardOrders .order-input-row { display: flex; gap: 8px; margin-bottom: 12px; }
     #cardOrders .order-input-row .col-name { flex: 3; }
     #cardOrders .order-input-row .col-addr { flex: 4; }
     #cardOrders .order-input-row .col-phone { flex: 2; max-width: 140px; flex-shrink: 0; }
-
     #cardProducts .prod-input-row { display: flex; gap: 8px; margin-bottom: 10px; align-items: center; }
     #cardProducts .prod-input-row .col-name { flex: 3; max-width: 250px; }
     #cardProducts .prod-input-row .col-qty { flex: 1; max-width: 100px; }
     #cardProducts .prod-input-row .col-price { flex: 1; max-width: 150px; }
     #cardProducts .prod-input-row .col-action { flex: 1; max-width: 120px; display: flex; align-items: center; }
-
     i[data-feather] { width: 16px; height: 16px; vertical-align: middle; }
     .btn.icon-only i[data-feather], .icon-btn i[data-feather] { width: 18px; height: 18px; }
-
     table{width:100%; border-collapse:collapse}
     th, td{padding:10px; border-bottom:1px solid var(--border-light); text-align:left; vertical-align:top; font-size:14px}
     th{background:#f1f5f9; color:var(--muted); font-weight:600; text-transform:uppercase; font-size:12px}
     #tblOrders th:nth-child(6), #tblOrders td:nth-child(6),
     #tblProducts th:nth-child(5), #tblProducts td:nth-child(5) { text-align: right; }
     #tblOrders tfoot td { border-bottom: none; padding-top: 12px; }
-
     small.muted{color:var(--muted)}
     .badge{background:#eef9f7; color:var(--accent); padding:6px 10px; border-radius:999px; font-weight:600}
     .notice{font-size:13px; color:#334155}
@@ -114,20 +77,17 @@
     .small{font-size:13px}
     .muted{color:var(--muted)}
     .footer-note{font-size:13px; color:#475569; text-align:center; margin-top:20px;}
-
     .customers-panel{border-radius:6px; border:1px solid var(--border-light); padding:0; max-height:400px; overflow-y:auto; background:#fff; transition: all 0.3s ease-out;}
     .customer-row{padding:8px; border-bottom:1px solid #f3f7f6; display:flex; align-items:center; justify-content:space-between; transition: background 0.1s;}
     .customer-row:hover{background:#f8f9fa;}
     .customer-row:last-child{border-bottom:none}
     .collapsed{max-height:0; overflow:hidden; padding:0; border:1px solid transparent; margin-bottom: 0 !important;}
     .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-
     #loadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(255, 255, 255, 0.95); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; transition: opacity 0.3s ease; color: var(--accent-2); }
     .spinner { border: 4px solid rgba(47,158,143,0.1); border-top: 4px solid var(--accent); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 10px; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     .hidden { display: none !important; }
     .fade-out { opacity: 0; }
-    
     @media (max-width:900px){ 
         .row{flex-direction:column} 
         .controls{ display: flex; flex-direction: row; align-items: center; flex-wrap: wrap; gap: 8px; width: 100%; }
@@ -145,12 +105,9 @@
         #cardOrders .order-input-row .col-name, #cardOrders .order-input-row .col-addr, #cardOrders .order-input-row .col-phone,
         #cardProducts .prod-input-row .col-name, #cardProducts .prod-input-row .col-qty, #cardProducts .prod-input-row .col-price, #cardProducts .prod-input-row .col-action { max-width: 100%; width: 100%; flex: 1; }
     }
-
     .table-wrap { display:block; overflow-x:auto; }
   </style>
-
 </head>
-
 <body>
   <div id="loadingOverlay">
     <div class="spinner"></div>
@@ -290,9 +247,11 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
  <script>
+    // === Cấu hình (giữ nguyên GS_URL nếu muốn bật remote) ===
     const GS_URL = 'https://script.google.com/macros/s/AKfycbyCYqov0F97TpP60pkanSwVMS7dvcZYxu1iXvFNYh25b5nEfEEleMSMg15PmVM8hNlp/exec'; 
     const USE_REMOTE = GS_URL && GS_URL.includes('script.google.com');
 
+    // ===== tiện ích cơ bản =====
     function $(id){ return document.getElementById(id); }
     function fmtCurrency(v){ return Intl.NumberFormat('vi-VN').format(Number(v||0)); }
     function uid(prefix){ return prefix + '_' + Math.random().toString(36).slice(2,9); }
@@ -300,32 +259,135 @@
 
     function showLoading(msg = 'Đang tải dữ liệu...') { const overlay = $('loadingOverlay'); overlay.querySelector('.small').textContent = msg; overlay.classList.remove('hidden', 'fade-out'); overlay.style.opacity = 1; }
     function hideLoading() { const overlay = $('loadingOverlay'); overlay.classList.add('fade-out'); setTimeout(() => { overlay.classList.add('hidden'); }, 300); }
-    
+
+    // ===== state =====
     let batches = [];
     let customers = [];
     let currentBatchId = null;
     let editingOrderIndex = null;
-    const LS_KEY = 'ordergo_v5_data'; 
+    const LS_KEY = 'ordergo_v5_data';
 
+    // ===== persistence local =====
     function persistAll(){ localStorage.setItem(LS_KEY, JSON.stringify({ batches, customers, currentBatchId })); }
     function loadLocal(){ const raw = localStorage.getItem(LS_KEY); if(raw){ try{ const d = JSON.parse(raw); batches = d.batches || []; customers = d.customers || []; currentBatchId = d.currentBatchId || (batches[0] && batches[0].id) || null; } catch(e){ console.warn(e); } } }
     function saveLocal(){ persistAll(); $('saveLabel').textContent = 'Đã lưu (local)'; setTimeout(()=> $('saveLabel').textContent = 'Lưu', 900); if(USE_REMOTE) gsSaveAll(); }
 
+    // ===== helper: sanitize sheet name =====
     function sanitizeForSheetName(name){ if(!name) name='batch'; let s = String(name).trim().replace(/[^\w\-\s]/g,'_'); s = s.replace(/\s+/g,' ').trim(); if(s.length>90) s = s.slice(0,90); return s || 'batch'; }
     function getCurrentBatch(){ return batches.find(b => b.id === currentBatchId); }
     function ensureIcons(){ if(window.feather && typeof feather.replace === 'function'){ try{ feather.replace(); } catch(e){} } else setTimeout(ensureIcons,150); }
 
+    // ========== NEW HELPERS FOR ITEM STRUCTURE (JSON) ==========
+    function parseItemsFromText(text) {
+      if (!text) return [];
+      return String(text).split(/\s*;\s*/).map(part => {
+        part = part.trim(); if (!part) return null;
+        // match "NAME xNUMBER"
+        const m = part.match(/^(.+?)\s*x\s*([0-9]+)$/i);
+        if (m) return { name: m[1].trim(), qty: Number(m[2]) };
+        const m2 = part.match(/^(.+?)\s+([0-9]+)$/);
+        if (m2) return { name: m2[1].trim(), qty: Number(m2[2]) };
+        return { name: part, qty: 1 };
+      }).filter(Boolean);
+    }
+
+    function itemsToText(items) {
+      if (!Array.isArray(items)) return String(items || '');
+      return items.map(it => `${it.name} x${it.qty}`).join('; ');
+    }
+
+    // Ensure each order has items[] array + itemsJSON + itemsText (used before saving)
+    function ensureOrdersStructured(batchesArr) {
+      return (batchesArr || []).map(b => {
+        const copy = JSON.parse(JSON.stringify(b));
+        copy.orders = (copy.orders || []).map(o => {
+          const orderCopy = Object.assign({}, o);
+          // Normalize items
+          if (Array.isArray(orderCopy.items)) {
+            // ok
+          } else if (typeof orderCopy.items === 'string') {
+            try {
+              const parsed = JSON.parse(orderCopy.items);
+              if (Array.isArray(parsed)) orderCopy.items = parsed;
+              else orderCopy.items = parseItemsFromText(orderCopy.items);
+            } catch (e) {
+              orderCopy.items = parseItemsFromText(orderCopy.items);
+            }
+          } else if (orderCopy.items == null) {
+            // if itemsText exists -> parse it, else empty
+            if (orderCopy.itemsText) orderCopy.items = parseItemsFromText(orderCopy.itemsText);
+            else orderCopy.items = [];
+          }
+          try { orderCopy.itemsJSON = JSON.stringify(orderCopy.items); } catch (e) { orderCopy.itemsJSON = '[]'; }
+          orderCopy.itemsText = itemsToText(orderCopy.items);
+          orderCopy.total = Number(orderCopy.total || 0);
+          return orderCopy;
+        });
+        return copy;
+      });
+    }
+
+    // When loading remote/local raw batches -> normalize orders/items to arrays
+    function normalizeLoadedBatches(rawBatches) {
+      return (rawBatches || []).map(rb => {
+        const b = Object.assign({}, rb);
+        b.products = b.products || [];
+        b.orders = (b.orders || []).map(o => {
+          const order = Object.assign({}, o);
+          if (Array.isArray(order.items)) {
+            // ok
+          } else if (typeof order.items === 'string') {
+            try {
+              const parsed = JSON.parse(order.items);
+              if (Array.isArray(parsed)) order.items = parsed;
+              else order.items = parseItemsFromText(order.items);
+            } catch (err) {
+              order.items = parseItemsFromText(order.items || order.itemsText || '');
+            }
+          } else if (order.items == null && (order.itemsText || '').length) {
+            order.items = parseItemsFromText(order.itemsText);
+          } else {
+            order.items = order.items || [];
+          }
+          // ensure supporting fields
+          try { order.itemsJSON = JSON.stringify(order.items); } catch(e){ order.itemsJSON = '[]'; }
+          order.itemsText = itemsToText(order.items);
+          order.total = Number(order.total || 0);
+          return order;
+        });
+        return b;
+      });
+    }
+    // ===== end helpers =====
+
+    // ===== render UI lists (unchanged but robust to items as string) =====
     function renderBatchList(){ const sel = $('selBatches'); sel.innerHTML=''; batches.forEach(b => { const opt = document.createElement('option'); opt.value = b.id; opt.textContent = b.name; if(b.id===currentBatchId) opt.selected = true; sel.appendChild(opt); }); if(batches.length===0){ const opt=document.createElement('option'); opt.value=''; opt.textContent='(Chưa có mã đơn tổng)'; sel.appendChild(opt); } }
     function renderProducts(){ const tb = document.querySelector('#tblProducts tbody'); tb.innerHTML=''; const b = getCurrentBatch(); if(!b){ refreshItemSelectOptions(); return; } b.products.forEach((p, idx) => { const tr = document.createElement('tr'); tr.innerHTML = `<td>${p.name}</td><td>${p.in}</td><td>${p.sold||0}</td><td style="font-weight:600; color:${p.remain <= 0 ? 'var(--danger)' : '#059669'};">${p.remain||0}</td><td style="text-align:right;">${fmtCurrency(p.price)}</td><td><button class="icon-btn" data-action="edit" data-idx="${idx}" title="Edit"><i data-feather="edit-2"></i></button><button class="icon-btn" data-action="delete" data-idx="${idx}" title="Xóa"><i data-feather="trash-2"></i></button></td>`; tb.appendChild(tr); }); refreshItemSelectOptions(); ensureIcons(); }
-    function renderOrders(){ const tb = document.querySelector('#tblOrders tbody'); tb.innerHTML=''; const b = getCurrentBatch(); if(!b) return; let grand=0; b.orders.forEach((o, idx) => { const itemsStr = Array.isArray(o.items) ? o.items.map(it => `${it.name} x${it.qty}`).join('<br/>') : (o.items||''); grand += Number(o.total||0); const tr = document.createElement('tr'); tr.innerHTML = `<td>${idx+1}</td><td>${o.customer}</td><td class="wrap-text">${o.address} / ${o.phone}</td><td class="wrap-text">${itemsStr}</td><td class="wrap-text">${(o.note||'')}</td><td style="text-align:right;">${fmtCurrency(o.total)}</td><td><button class="icon-btn" data-action="edit-order" data-idx="${idx}" title="Edit"><i data-feather="edit-2"></i></button><button class="icon-btn" data-action="del-order" data-idx="${idx}" title="Xóa"><i data-feather="trash-2"></i></button></td>`; tb.appendChild(tr); }); $('grandTotal').textContent = fmtCurrency(grand); ensureIcons(); }
+    function renderOrders(){ const tb = document.querySelector('#tblOrders tbody'); tb.innerHTML=''; const b = getCurrentBatch(); if(!b) return; let grand=0; b.orders.forEach((o, idx) => {
+        // items may be array or string; handle both
+        let itemsArr = [];
+        if (Array.isArray(o.items)) itemsArr = o.items;
+        else if (typeof o.items === 'string') {
+          // try parse JSON, else parse text
+          try { itemsArr = JSON.parse(o.items); if(!Array.isArray(itemsArr)) itemsArr = parseItemsFromText(o.items); } catch(e){ itemsArr = parseItemsFromText(o.items); }
+        } else if (o.itemsText) {
+          itemsArr = parseItemsFromText(o.itemsText);
+        }
+        const itemsStr = itemsArr.map(it => `${it.name} x${it.qty}`).join('<br/>');
+        grand += Number(o.total||0);
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${idx+1}</td><td>${o.customer}</td><td class="wrap-text">${o.address} / ${o.phone}</td><td class="wrap-text">${itemsStr}</td><td class="wrap-text">${(o.note||'')}</td><td style="text-align:right;">${fmtCurrency(o.total)}</td><td><button class="icon-btn" data-action="edit-order" data-idx="${idx}" title="Edit"><i data-feather="edit-2"></i></button><button class="icon-btn" data-action="del-order" data-idx="${idx}" title="Xóa"><i data-feather="trash-2"></i></button></td>`;
+        tb.appendChild(tr);
+    }); $('grandTotal').textContent = fmtCurrency(grand); ensureIcons(); }
 
+    // ===== order item rows UI =====
     const itemsContainer = $('itemsContainer'); 
     function itemsContainerClear(){ itemsContainer.innerHTML=''; }
 
     function refreshItemSelectOptions(){ const b = getCurrentBatch(); const prodNames = b ? b.products.map(p => p.name) : []; Array.from(document.querySelectorAll('.item-select')).forEach(sel => { const oldVal = sel.value; sel.innerHTML=''; const opt0 = document.createElement('option'); opt0.value=''; opt0.textContent='-- Chọn hàng --'; sel.appendChild(opt0); if(prodNames.length===0){ const opt=document.createElement('option'); opt.value=''; opt.textContent='(Chưa có hàng hóa)'; sel.appendChild(opt); } prodNames.forEach(name=>{ const o = document.createElement('option'); o.value=name; o.textContent=name; if(name===oldVal) o.selected=true; sel.appendChild(o); }); }); }
-    function addItemRow(prefName = '', prefQty = 1){ const row=document.createElement('div'); row.className='row'; const sel=document.createElement('select'); sel.className='item-select'; sel.style.flex = '1'; const inpQty=document.createElement('input'); inpQty.type='number'; inpQty.min=1; inpQty.value = prefQty; inpQty.className = 'item-qty'; inpQty.style.width='100px'; inpQty.style.flex = '0 0 100px'; inpQty.style.marginRight = '8px'; const btnDel=document.createElement('button'); btnDel.className='btn small ghost icon-only'; btnDel.type='button'; btnDel.innerHTML='<i data-feather="trash-2"></i>'; btnDel.title='Xóa'; btnDel.style.flex = '0 0 40px'; row.appendChild(sel); row.appendChild(inpQty); row.appendChild(btnDel); itemsContainer.appendChild(row); btnDel.addEventListener('click', ()=>{ row.remove(); updateOrderTotal(); }); sel.addEventListener('change', ()=>updateOrderTotal()); inpQty.addEventListener('input', ()=>updateOrderTotal()); refreshItemSelectOptions(); if(prefName) sel.value=prefName; ensureIcons(); return row; }
+    function addItemRow(prefName = '', prefQty = 1){ const row=document.createElement('div'); row.className='row'; const sel=document.createElement('select'); sel.className='item-select'; sel.style.flex = '1'; const inpQty=document.createElement('input'); inpQty.type='number'; inpQty.min=1; inpQty.value = prefQty; inpQty.className = 'item-qty'; inpQty.style.width='100px'; inpQty.style.flex = '0 0 100px'; inpQty.style.marginRight = '8px'; const btnDel=document.createElement('button'); btnDel.className='btn small ghost icon-only'; btnDel.type='button'; btnDel.innerHTML='<i data-feather=\"trash-2\"></i>'; btnDel.title='Xóa'; btnDel.style.flex = '0 0 40px'; row.appendChild(sel); row.appendChild(inpQty); row.appendChild(btnDel); itemsContainer.appendChild(row); btnDel.addEventListener('click', ()=>{ row.remove(); updateOrderTotal(); }); sel.addEventListener('change', ()=>updateOrderTotal()); inpQty.addEventListener('input', ()=>updateOrderTotal()); refreshItemSelectOptions(); if(prefName) sel.value=prefName; ensureIcons(); return row; }
     function updateOrderTotal(){ const rows = Array.from(itemsContainer.children); let total=0; rows.forEach(r=>{ const sel=r.querySelector('select'); const qty=Number(r.querySelector('input[type=number]').value||0); const prod = getCurrentBatch() ? getCurrentBatch().products.find(p=>p.name===sel.value) : null; if(prod) total += Number(prod.price||0)*qty; }); $('orderTotal').textContent = fmtCurrency(total); return total; }
-    
+
     function resetOrderForm() { 
         $('orderCustomer').value=''; 
         $('orderAddress').value=''; 
@@ -340,217 +402,221 @@
         $('btnCancelEdit').style.display = 'none';
     }
 
+    // ===== batch & product handlers =====
     function createNewBatchPrompt(){ let name = prompt('Tên mã đơn tổng:', ''); if(name===null) return; name = String(name||'').trim(); const d=new Date(); const pad=n=>String(n).padStart(2,'0'); const prefix = `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}`; let final = name ? `${prefix}_${name}` : `${prefix}`; const sanitized = sanitizeForSheetName(final); if(sanitized !== final){ if(!confirm(`Tên sẽ được chuẩn hóa: ${sanitized}\nBạn đồng ý?`)) return; final = sanitized; } else final = sanitized; const id = uid('batch'); const b = { id, name: final, products: [], orders: [], timestamp: new Date().toISOString() }; batches.unshift(b); currentBatchId = id; persistAll(); renderAll(); alert(`Đã tạo batch: ${final}`); }
     function addProductFromForm(){ const name=$('prodName').value.trim(); if(!name){ alert('Tên hàng không được trống'); return; } const pin=Number($('prodIn').value||0); const price=Number($('prodPrice').value||0); const b=getCurrentBatch(); if(!b){ alert('Chọn hoặc tạo mã đơn tổng trước'); return; } if(b.products.some(p => lcName(p.name) === lcName(name))) { alert(`Sản phẩm "${name}" đã tồn tại.`); return; } b.products.push({ name, in: pin, sold:0, remain: pin, price }); $('prodName').value=''; $('prodIn').value=''; $('prodPrice').value=''; persistAll(); renderProducts(); }
     function addItemToOrder(){ addItemRow('',1); }
 
-    function addOrUpdateOrderFromForm(){ const b=getCurrentBatch(); if(!b){ alert('Chọn mã đơn tổng trước'); return; } const customer=$('orderCustomer').value.trim(); const address=$('orderAddress').value.trim(); const phone=$('orderPhone').value.trim(); const note=$('orderNote').value.trim(); if(!customer){ alert('Nhập tên khách hàng'); return; } const items=[]; Array.from(itemsContainer.children).forEach(r=>{ const name=r.querySelector('select').value; const qty=Number(r.querySelector('input[type=number]').value||0); if(name && qty>0) items.push({ name, qty }); }); if(items.length===0 && editingOrderIndex === null){ alert('Phải có ít nhất 1 mặt hàng.'); return; } const total=updateOrderTotal(); const newOrder={ customer, address, phone, note, items, total, created:new Date().toISOString() };
+    // ===== create/update order: ensure items stored as array + itemsJSON/itemsText =====
+    function addOrUpdateOrderFromForm(){ 
+      const b = getCurrentBatch(); if(!b){ alert('Chọn mã đơn tổng trước'); return; }
+      const customer = $('orderCustomer').value.trim(); const address = $('orderAddress').value.trim(); const phone = $('orderPhone').value.trim(); const note = $('orderNote').value.trim();
+      if(!customer){ alert('Nhập tên khách hàng'); return; }
+      const items = [];
+      Array.from(itemsContainer.children).forEach(r=>{ const name = r.querySelector('select').value; const qty = Number(r.querySelector('input[type=number]').value||0); if(name && qty>0) items.push({ name, qty }); });
+      if(items.length===0 && editingOrderIndex === null){ alert('Phải có ít nhất 1 mặt hàng.'); return; }
+      const total = updateOrderTotal();
 
-      const bcur = b;
+      // build order object with structured items and helper fields
+      const newOrder = {
+        id: uid('order'),
+        customer,
+        address,
+        phone,
+        note,
+        items: JSON.parse(JSON.stringify(items)), // ensure copy
+        itemsJSON: JSON.stringify(items),
+        itemsText: itemsToText(items),
+        total: Number(total) || 0,
+        created: new Date().toISOString()
+      };
+
+      // update sold counts when editing: reverse old sold, then add new
       if (editingOrderIndex !== null) {
-        const oldOrder = bcur.orders[editingOrderIndex];
+        const oldOrder = b.orders[editingOrderIndex];
         if (oldOrder && Array.isArray(oldOrder.items)) {
           oldOrder.items.forEach(it => {
-            const p = bcur.products.find(prod => prod.name === it.name);
-            if (p) {
-              p.sold = Math.max(0, (p.sold || 0) - it.qty);
-            }
+            const p = b.products.find(prod => prod.name === it.name);
+            if (p) { p.sold = Math.max(0, (p.sold || 0) - it.qty); }
           });
         }
-        bcur.orders.splice(editingOrderIndex, 1, newOrder);
+        b.orders.splice(editingOrderIndex, 1, newOrder);
       } else {
-        bcur.orders.push(newOrder);
+        b.orders.push(newOrder);
       }
 
-      items.forEach(it=>{ const p = bcur.products.find(pp => pp.name===it.name); if(p){ p.sold = (p.sold||0) + Number(it.qty); } });
-      bcur.products.forEach(p => { p.remain = (p.in || 0) - (p.sold || 0); });
+      // adjust product sold counts based on new items
+      newOrder.items.forEach(it => {
+        const p = b.products.find(pp => lcName(pp.name) === lcName(it.name));
+        if (p) { p.sold = (p.sold || 0) + Number(it.qty); }
+      });
+      b.products.forEach(p => { p.remain = (p.in || 0) - (p.sold || 0); });
 
+      // update customers list
       const custIdx = customers.findIndex(c => lcName(c.name) === lcName(customer));
       if(custIdx === -1){ customers.unshift({ name: customer, address, phone }); } else { customers[custIdx].address = address; customers[custIdx].phone = phone; }
 
-      resetOrderForm(); persistAll(); renderAll(); }
-    
-    // ========== SECTION START: CODE FIX FOR DATA SYNC ==========
+      resetOrderForm(); persistAll(); renderAll();
+    }
 
-    /**
-     * Helper function to update product name references in all orders.
-     * This is crucial when a product's name is edited.
-     */
+    // ===== product edit: keep name sync across orders =====
     function updateProductNameInOrders(oldName, newName) {
         const b = getCurrentBatch();
         if (!b || !oldName || !newName || oldName === newName) return;
-
         b.orders.forEach(order => {
             if (Array.isArray(order.items)) {
-                order.items.forEach(item => {
-                    if (item.name === oldName) {
-                        item.name = newName;
-                    }
-                });
+                order.items.forEach(item => { if (item.name === oldName) item.name = newName; });
             }
+            // update itemsText & itemsJSON
+            order.itemsText = itemsToText(order.items);
+            try { order.itemsJSON = JSON.stringify(order.items); } catch(e){ order.itemsJSON = '[]'; }
         });
     }
 
-    /**
-     * Helper function to recalculate all order totals based on current product prices.
-     * This ensures that any price change is reflected across all existing orders.
-     */
     function recalculateAllOrderTotals() {
         const b = getCurrentBatch();
         if (!b) return;
-
         b.orders.forEach(order => {
             let newTotal = 0;
             if (Array.isArray(order.items)) {
                 order.items.forEach(item => {
                     const product = b.products.find(p => p.name === item.name);
-                    if (product) {
-                        newTotal += (Number(product.price) || 0) * (Number(item.qty) || 0);
-                    }
+                    if (product) newTotal += (Number(product.price) || 0) * (Number(item.qty) || 0);
                 });
             }
-            order.total = newTotal;
+            order.total = Number(newTotal || 0);
         });
     }
 
-    /**
-     * MODIFIED function to handle product editing.
-     * Now ensures data consistency across the application after an edit.
-     */
     function editProduct(index) {
-        const b = getCurrentBatch();
-        if (!b) return;
-        const p = b.products[index];
-        if (!p) return;
-
-        const oldName = p.name; // Store old name before any changes
-
+        const b = getCurrentBatch(); if (!b) return; const p = b.products[index]; if (!p) return;
+        const oldName = p.name;
         const newName = prompt('Tên hàng', p.name);
-        if (newName === null) return; // User cancelled
-
+        if (newName === null) return;
         const newIn = prompt('Nhập', p.in);
         if (newIn === null) return;
-
         const newPrice = prompt('Giá bán', p.price);
         if (newPrice === null) return;
-        
-        // 1. Update product details in the products array
-        p.name = newName.trim();
-        p.in = Number(newIn) || 0;
-        p.price = Number(newPrice) || 0;
-        p.remain = p.in - (p.sold || 0);
-
-        // 2. If product name changed, update all existing orders that reference it.
-        if (oldName !== p.name) {
-            updateProductNameInOrders(oldName, p.name);
-        }
-        
-        // 3. Recalculate totals for ALL orders to reflect potential price changes.
+        p.name = newName.trim(); p.in = Number(newIn) || 0; p.price = Number(newPrice) || 0; p.remain = p.in - (p.sold || 0);
+        if (oldName !== p.name) updateProductNameInOrders(oldName, p.name);
         recalculateAllOrderTotals();
-
-        // 4. Persist all changes and re-render the entire interface for consistency.
-        persistAll();
-        renderAll(); // Use renderAll() to update both products and orders tables.
+        persistAll(); renderAll();
     }
 
-    // ========== SECTION END: CODE FIX ==========
-
-    function editOrder(index){ 
-        const b = getCurrentBatch(); 
-        if (!b) return; 
-        const o = b.orders[index]; 
-        if (!o) return;
-
-        editingOrderIndex = index;
-        
-        $('orderCustomer').value = o.customer || '';
-        $('orderAddress').value = o.address || '';
-        $('orderPhone').value = o.phone || '';
-        $('orderNote').value = o.note || '';
-        itemsContainerClear(); 
-
-        if(Array.isArray(o.items) && o.items.length > 0) {
-            o.items.forEach(it => addItemRow(it.name, it.qty)); 
-        } else { 
-            addItemRow('',1); 
-            addItemRow('',1); 
-        } 
-        
-        updateOrderTotal(); 
-        $('btnAddOrder').textContent = 'Cập nhật đơn';
-        $('btnCancelEdit').style.display = 'inline-flex';
-        $('orderCustomer').focus();
-    }
-
+    // ===== delete batch & orders (maintain sold counts) =====
     function deleteBatch(id){ if(!id) return; const bidx = batches.findIndex(b=>b.id===id); if(bidx===-1) return; if(!confirm('Xóa mã này? Hành động không thể hoàn tác.')) return; batches.splice(bidx,1); currentBatchId = batches[0] ? batches[0].id : null; persistAll(); renderAll(); }
-    
-    async function gsSaveAll(){ if(!USE_REMOTE) return false; try{ const payloadObj = { batches, customers, currentBatchId }; const params = new URLSearchParams(); params.append('action','saveAll'); params.append('data', JSON.stringify({ data: payloadObj })); const resp = await fetch(GS_URL, { method:'POST', body: params }); const text = await resp.text(); let j = {}; try{ j = JSON.parse(text); } catch(e){ j = { ok:false, raw:text }; } if(j && j.ok){ return true; } else { console.warn('gsSaveAll server error', j); alert('Lưu lên Google Sheets thất bại: ' + (j && j.error ? j.error : JSON.stringify(j))); return false; } } catch(err){ console.error('gsSaveAll error', err); alert('Lỗi khi lưu lên Google Sheets. Kiểm tra console (F12).'); return false; } }
-    async function gsLoadAll(){ if (!USE_REMOTE) return false; try { const params = new URLSearchParams(); params.append('action', 'readAll'); const resp = await fetch(GS_URL, { method: 'POST', body: params }); const text = await resp.text(); let j = {}; try { j = JSON.parse(text); } catch (e) { return false; } if (j && j.ok && j.data) { const remote = j.data; const remoteBatches = (remote.batches || []).map(rb => ({ id: rb.id || rb.name, name: rb.name, products: rb.products || [], orders: rb.orders || [], timestamp: rb.timestamp })); if (remoteBatches.length) batches = remoteBatches; currentBatchId = remote.currentBatchId || (batches[0] && batches[0].id) || currentBatchId; return true; } return false; } catch (err) { return false; } }
-    async function loadCustomersFromGS() { if (!USE_REMOTE) { alert('Lỗi: URL Apps Script chưa được cấu hình.'); return false; } try { showLoading('Đang tải khách hàng...'); const params = new URLSearchParams(); params.append('action', 'readAll'); const resp = await fetch(GS_URL, { method: 'POST', body: params }); const text = await resp.text(); let j = {}; try { j = JSON.parse(text); } catch (e) { console.error("Invalid JSON response.", text); throw new Error("Phản hồi từ Google Sheet không phải JSON."); } if (j && j.ok && j.data) { const remoteCust = j.data.customers || []; const map = {}; remoteCust.forEach(c => { const key = lcName(c.name); map[key] = { name: c.name, address: c.address || '', phone: c.phone || '' }; }); customers.forEach(c => { const key = lcName(c.name); if (!map[key]) { map[key] = c; } else { if (!map[key].address && c.address) map[key].address = c.address; if (!map[key].phone && c.phone) map[key].phone = c.phone; } }); customers = Object.values(map); alert(`Đã tải và hợp nhất ${remoteCust.length} khách hàng.`); batches = j.data.batches || batches; currentBatchId = j.data.currentBatchId || (batches[0] && batches[0].id) || currentBatchId; persistAll(); renderAll(); return true; } else { alert('Lỗi: Server Google Sheet trả về dữ liệu không hợp lệ.'); return false; } } catch (err) { alert('Lỗi khi tải từ Google Sheets: ' + err.message); return false; } finally { hideLoading(); } }
+
+    // ====== Remote save/load ======
+    async function gsSaveAll(){ 
+      if(!USE_REMOTE) {
+        // Save localNormalized for safety
+        batches = normalizeLoadedBatches(batches);
+        persistAll();
+        return false;
+      }
+      try{
+        // Ensure we send structured items + itemsJSON/itemsText
+        const payloadObj = { batches: ensureOrdersStructured(batches), customers, currentBatchId };
+        const params = new URLSearchParams();
+        params.append('action','saveAll');
+        params.append('data', JSON.stringify({ data: payloadObj }));
+        const resp = await fetch(GS_URL, { method:'POST', body: params });
+        const text = await resp.text();
+        let j = {};
+        try{ j = JSON.parse(text); } catch(e){ j = { ok:false, raw:text }; }
+        if(j && j.ok){ return true; } else { console.warn('gsSaveAll server error', j); alert('Lưu lên Google Sheets thất bại: ' + (j && j.error ? j.error : JSON.stringify(j))); return false; }
+      } catch(err){
+        console.error('gsSaveAll error', err);
+        alert('Lỗi khi lưu lên Google Sheets. Kiểm tra console (F12).');
+        return false;
+      }
+    }
+
+    async function gsLoadAll(){ 
+      if (!USE_REMOTE) return false;
+      try {
+        const params = new URLSearchParams();
+        params.append('action', 'readAll');
+        const resp = await fetch(GS_URL, { method: 'POST', body: params });
+        const text = await resp.text();
+        let j = {};
+        try { j = JSON.parse(text); } catch (e) { console.error('gsLoadAll parse error', e); return false; }
+        if (j && j.ok && j.data) {
+          // normalize loaded batches -> orders[].items guaranteed array
+          const remoteBatchesRaw = (j.data.batches || []);
+          const remoteBatches = normalizeLoadedBatches(remoteBatchesRaw);
+          batches = remoteBatches.map(rb => ({ id: rb.id || rb.name || uid('batch'), name: rb.name, products: rb.products || [], orders: rb.orders || [], timestamp: rb.timestamp }));
+          currentBatchId = j.data.currentBatchId || (batches[0] && batches[0].id) || currentBatchId;
+          persistAll();
+          return true;
+        }
+        return false;
+      } catch (err) {
+        console.error('gsLoadAll error', err);
+        return false;
+      }
+    }
+
+    async function loadCustomersFromGS() { 
+      if (!USE_REMOTE) { alert('Lỗi: URL Apps Script chưa được cấu hình.'); return false; }
+      try { showLoading('Đang tải khách hàng...'); const params = new URLSearchParams(); params.append('action', 'readAll'); const resp = await fetch(GS_URL, { method: 'POST', body: params }); const text = await resp.text(); let j = {}; try { j = JSON.parse(text); } catch (e) { console.error("Invalid JSON response.", text); throw new Error("Phản hồi từ Google Sheet không phải JSON."); } if (j && j.ok && j.data) { const remoteCust = j.data.customers || []; const map = {}; remoteCust.forEach(c => { const key = lcName(c.name); map[key] = { name: c.name, address: c.address || '', phone: c.phone || '' }; }); customers.forEach(c => { const key = lcName(c.name); if (!map[key]) { map[key] = c; } else { if (!map[key].address && c.address) map[key].address = c.address; if (!map[key].phone && c.phone) map[key].phone = c.phone; } }); customers = Object.values(map); alert(`Đã tải và hợp nhất ${remoteCust.length} khách hàng.`); const remoteBatches = j.data.batches || []; if (remoteBatches.length) { batches = normalizeLoadedBatches(remoteBatches); currentBatchId = j.data.currentBatchId || (batches[0] && batches[0].id) || currentBatchId; } persistAll(); renderAll(); return true; } else { alert('Lỗi: Server Google Sheet trả về dữ liệu không hợp lệ.'); return false; } } catch (err) { alert('Lỗi khi tải từ Google Sheets: ' + err.message); return false; } finally { hideLoading(); } }
+
     function deleteLocalCustomers() { if (customers.length === 0) { alert('Danh sách khách hàng local đã trống.'); return; } if (confirm(`Xóa toàn bộ ${customers.length} khách hàng trong trình duyệt?`)) { customers = []; persistAll(); renderAll(); alert('Đã xóa. Bấm "Lưu" để đồng bộ lên Google Sheets.'); } }
 
     function handleUploadCustomers(file){ const reader = new FileReader(); reader.onload = function(e){ const data = e.target.result; let workbook = null; try{ workbook = XLSX.read(data, {type:'binary'}); } catch(ex){ try{ workbook = XLSX.read(data, {type:'string'}); } catch(e2){ alert('Không đọc được file'); return; } } const firstSheetName = workbook.SheetNames[0]; const ws = workbook.Sheets[firstSheetName]; const arr = XLSX.utils.sheet_to_json(ws, { header:1 }); let added=0, updated=0; arr.slice(1).forEach(r => { const name = (r[0] || '').toString().trim(); const addr = (r[1] || '').toString().trim(); const phone = (r[2] || '').toString().trim(); if(!name) return; const key = lcName(name); const idx = customers.findIndex(c => lcName(c.name) === key); if(idx === -1){ customers.unshift({ name, address: addr, phone }); added++; } else { customers[idx].address = addr; customers[idx].phone = phone; updated++; } }); persistAll(); renderCustomersPanel(); updateCustomersDatalist(); alert(`Import hoàn tất. Thêm: ${added}, Cập nhật: ${updated}`); }; reader.readAsBinaryString(file); }
-    
-    function exportExcel() {
-        if (typeof XLSX === 'undefined') {
-            alert('Lỗi: Thư viện xuất Excel chưa được tải. Vui lòng kiểm tra kết nối mạng và thử lại.');
-            return;
-        }
-        try {
-            const currentB = getCurrentBatch();
-            if (!currentB) {
-                alert('Chưa chọn batch để xuất.');
-                return;
-            }
 
-            const wb = XLSX.utils.book_new();
-
-            const prodRows = [['Tên hàng', 'Nhập', 'Đã bán', 'Tồn', 'Giá bán']].concat(
-                (currentB.products || []).map(p => [p.name, p.in, p.sold, p.remain, p.price])
-            );
-            const wsP = XLSX.utils.aoa_to_sheet(prodRows);
-            XLSX.utils.book_append_sheet(wb, wsP, 'Products_' + sanitizeForSheetName(currentB.name));
-
-            const allProductNames = (currentB.products || []).map(p => p.name);
-            const orderHeaders = ['STT', 'Tổng tiền', 'Khách hàng', 'Địa chỉ', 'Số điện thoại', 'Ghi chú'].concat(allProductNames);
-
-            const orderRows = (currentB.orders || []).map((o, index) => {
-                const itemMap = new Map();
-                if (Array.isArray(o.items)) {
-                    o.items.forEach(item => {
-                        itemMap.set(item.name, item.qty);
-                    });
-                }
-                const row = [
-                    index + 1,
-                    o.total || 0,
-                    o.customer || '',
-                    o.address || '',
-                    o.phone || '',
-                    o.note || ''
-                ];
-                allProductNames.forEach(prodName => {
-                    row.push(itemMap.get(prodName) || '');
-                });
-
-                return row;
-            });
-
-            const wsO = XLSX.utils.aoa_to_sheet([orderHeaders].concat(orderRows));
-            XLSX.utils.book_append_sheet(wb, wsO, 'Orders_' + sanitizeForSheetName(currentB.name));
-
-            XLSX.writeFile(wb, `ordergo_export_${currentB.name}_${new Date().toISOString().slice(0,10)}.xlsx`);
-        } catch (e) {
-            console.error(e);
-            alert('Lỗi khi xuất Excel: ' + e.message);
-        }
+    // ====== Export Excel: ensure reads items as arrays (compatible with old string format) ======
+    function exportExcel() { 
+      if (typeof XLSX === 'undefined') { alert('Lỗi: Thư viện xuất Excel chưa được tải.'); return; }
+      try {
+        const currentB = getCurrentBatch();
+        if (!currentB) { alert('Chưa chọn batch để xuất.'); return; }
+        const wb = XLSX.utils.book_new();
+        // Products sheet
+        const prodRows = [['Tên hàng', 'Nhập', 'Đã bán', 'Tồn', 'Giá bán']].concat((currentB.products || []).map(p => [p.name, p.in, p.sold, p.remain, p.price]));
+        const wsP = XLSX.utils.aoa_to_sheet(prodRows);
+        XLSX.utils.book_append_sheet(wb, wsP, 'Products_' + sanitizeForSheetName(currentB.name));
+        // Orders sheet - headers include product columns
+        const allProductNames = (currentB.products || []).map(p => p.name);
+        const orderHeaders = ['STT', 'Tổng tiền', 'Khách hàng', 'Địa chỉ', 'Số điện thoại', 'Ghi chú'].concat(allProductNames);
+        const orderRows = (currentB.orders || []).map((o, index) => {
+            // ensure itemsArr
+            let itemsArr = [];
+            if (Array.isArray(o.items)) itemsArr = o.items;
+            else if (typeof o.items === 'string') { try { const parsed = JSON.parse(o.items); if (Array.isArray(parsed)) itemsArr = parsed; else itemsArr = parseItemsFromText(o.items); } catch(e){ itemsArr = parseItemsFromText(o.items); } }
+            else if (o.itemsText) itemsArr = parseItemsFromText(o.itemsText);
+            const itemMap = new Map();
+            itemsArr.forEach(item => { itemMap.set(item.name, item.qty); });
+            const row = [ index + 1, o.total || 0, o.customer || '', o.address || '', o.phone || '', o.note || '' ];
+            allProductNames.forEach(prodName => row.push(itemMap.get(prodName) || ''));
+            return row;
+        });
+        // Totals row
+        let totalOfTotals = 0; const productTotals = {}; allProductNames.forEach(pn => productTotals[pn] = 0);
+        (currentB.orders || []).forEach(o => {
+            totalOfTotals += Number(o.total || 0);
+            let itemsArr = [];
+            if (Array.isArray(o.items)) itemsArr = o.items;
+            else if (typeof o.items === 'string') { try { const parsed = JSON.parse(o.items); if (Array.isArray(parsed)) itemsArr = parsed; else itemsArr = parseItemsFromText(o.items); } catch(e){ itemsArr = parseItemsFromText(o.items); } }
+            else if (o.itemsText) itemsArr = parseItemsFromText(o.itemsText);
+            itemsArr.forEach(it => { if (productTotals.hasOwnProperty(it.name)) productTotals[it.name] += Number(it.qty || 0); });
+        });
+        const totalRow = []; totalRow.push(''); totalRow.push(totalOfTotals); totalRow.push(''); totalRow.push(''); totalRow.push(''); totalRow.push(''); allProductNames.forEach(pn => totalRow.push(productTotals[pn] || ''));
+        const wsO = XLSX.utils.aoa_to_sheet([orderHeaders].concat([totalRow]).concat(orderRows));
+        XLSX.utils.book_append_sheet(wb, wsO, 'Orders_' + sanitizeForSheetName(currentB.name));
+        XLSX.writeFile(wb, `ordergo_export_${currentB.name}_${new Date().toISOString().slice(0,10)}.xlsx`);
+      } catch (e) { console.error(e); alert('Lỗi khi xuất Excel: ' + e.message); }
     }
-    
+
+    // ===== customers UI =====
     function renderCustomersPanel(searchQuery = ''){ const panel = $('customersPanel'); panel.innerHTML=''; const q = searchQuery.toLowerCase(); const listToRender = customers.filter(c => !q || (c.name||'').toLowerCase().includes(q) || (c.phone||'').toLowerCase().includes(q)); if(!listToRender.length){ panel.innerHTML = `<div class="small muted" style="padding:16px;">(Không tìm thấy khách hàng)</div>`; return; } listToRender.forEach((c) => { const row = document.createElement('div'); row.className='customer-row'; const left = document.createElement('div'); left.innerHTML = `<div><strong>${c.name}</strong><div class="small muted">${c.address} • ${c.phone}</div></div>`; const right = document.createElement('div'); const btnPick = document.createElement('button'); btnPick.className='btn small secondary'; btnPick.textContent='Chọn'; btnPick.addEventListener('click', ()=>{ $('orderCustomer').value=c.name; $('orderAddress').value=c.address; $('orderPhone').value=c.phone; }); const btnDel = document.createElement('button'); btnDel.className='btn small danger'; btnDel.style.marginLeft='8px'; btnDel.textContent='Xóa'; btnDel.addEventListener('click', ()=>{ if(!confirm('Xóa khách này?')) return; const globalIndex = customers.findIndex(cust => lcName(cust.name) === lcName(c.name)); if (globalIndex > -1) customers.splice(globalIndex,1); persistAll(); renderCustomersPanel(); updateCustomersDatalist(); }); right.appendChild(btnPick); right.appendChild(btnDel); row.appendChild(left); row.appendChild(right); panel.appendChild(row); }); }
+
     function updateCustomersDatalist(){ const dl = $('customersDatalist'); dl.innerHTML=''; customers.forEach(c => { const o = document.createElement('option'); o.value = `${c.name} | SĐT: ${c.phone} | Đ/c: ${c.address}`; dl.appendChild(o); }); }
 
+    // ===== delegated handlers for tables =====
     function attachDelegatedTableHandlers(){ const prodTbody = document.querySelector('#tblProducts tbody'); if(prodTbody && !prodTbody._hasDelegation){ prodTbody.addEventListener('click', function(e){ const btn = e.target.closest('button[data-action]'); if(!btn) return; const action = btn.getAttribute('data-action'); const idx = Number(btn.dataset.idx); if(action === 'delete'){ if(confirm('Xóa sản phẩm?')){ const b = getCurrentBatch(); if(!b) return; b.products.splice(idx,1); persistAll(); renderAll(); } } else if(action === 'edit'){ editProduct(idx); } }); prodTbody._hasDelegation = true; } const orderTbody = document.querySelector('#tblOrders tbody'); if(orderTbody && !orderTbody._hasDelegation){ orderTbody.addEventListener('click', function(e){ const btn = e.target.closest('button[data-action]'); if(!btn) return; const action = btn.getAttribute('data-action'); const idx = Number(btn.dataset.idx); if(action === 'del-order'){ if(confirm('Xóa đơn này?')){ const b = getCurrentBatch(); if(!b) return; const deletedOrder = b.orders[idx]; if (deletedOrder && Array.isArray(deletedOrder.items)) { deletedOrder.items.forEach(item => { const p = b.products.find(prod => prod.name === item.name); if (p) { p.sold = Math.max(0, (p.sold || 0) - item.qty); p.remain = p.in - p.sold; } }); } b.orders.splice(idx,1); persistAll(); renderOrders(); renderProducts(); } } else if(action === 'edit-order'){ editOrder(idx); } }); orderTbody._hasDelegation = true; } }
 
+    // ===== attach UI handlers =====
     function attachHandlers(){ 
         $('btnNewBatch').addEventListener('click', createNewBatchPrompt); 
         $('selBatches').addEventListener('change',(e)=>{ currentBatchId = e.target.value; persistAll(); renderAll(); }); 
@@ -572,10 +638,36 @@
     }
 
     function renderAll(){ renderBatchList(); renderProducts(); renderOrders(); renderCustomersPanel(); updateCustomersDatalist(); ensureIcons(); }
-    
+
+    // ===== edit order =====
+    function editOrder(index){ 
+        const b = getCurrentBatch(); 
+        if (!b) return; 
+        const o = b.orders[index]; 
+        if (!o) return;
+        editingOrderIndex = index;
+        $('orderCustomer').value = o.customer || '';
+        $('orderAddress').value = o.address || '';
+        $('orderPhone').value = o.phone || '';
+        $('orderNote').value = o.note || '';
+        itemsContainerClear(); 
+        let itemsArr = [];
+        if (Array.isArray(o.items)) itemsArr = o.items;
+        else if (typeof o.items === 'string') { try { const parsed = JSON.parse(o.items); if (Array.isArray(parsed)) itemsArr = parsed; else itemsArr = parseItemsFromText(o.items); } catch(e){ itemsArr = parseItemsFromText(o.items); } }
+        else if (o.itemsText) itemsArr = parseItemsFromText(o.itemsText);
+        if(itemsArr.length > 0) { itemsArr.forEach(it => addItemRow(it.name, it.qty)); } else { addItemRow('',1); addItemRow('',1); } 
+        updateOrderTotal(); 
+        $('btnAddOrder').textContent = 'Cập nhật đơn';
+        $('btnCancelEdit').style.display = 'inline-flex';
+        $('orderCustomer').focus();
+    }
+
+    // ===== startup =====
     async function initApp() {
         showLoading();
         loadLocal();
+        // normalize local data (in case items were saved as strings earlier)
+        batches = normalizeLoadedBatches(batches);
         if (USE_REMOTE) { await gsLoadAll(); }
         if (!batches.length) { const id = uid('batch'); batches.push({ id, name: new Date().toISOString().slice(0, 10).replace(/-/g, ''), products: [], orders: [] }); currentBatchId = id; persistAll(); } else if (!currentBatchId || !batches.find(b => b.id === currentBatchId)) { currentBatchId = batches[0].id; persistAll(); }
         renderAll();
@@ -590,4 +682,5 @@
     window.ordergo = { batches, customers, persistAll, gsSaveAll, gsLoadAll };
 
   </script>
+</body>
 </html>
