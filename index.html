@@ -99,13 +99,13 @@
         .main-grid { grid-template-columns: 1fr; }
         #cardOrders .order-input-row, #cardProducts .prod-input-row { flex-direction: column; gap: 12px; }
         #itemsContainer .row { flex-direction: row; gap: 8px; }
-        #itemsContainer .row .item-select { flex: 1; min-width: 100px; }
         #itemsContainer .row input[type="number"] { flex: 0 0 80px; }
         #itemsContainer .row .btn { flex: 0 0 40px; }
         #cardOrders .order-input-row .col-name, #cardOrders .order-input-row .col-addr, #cardOrders .order-input-row .col-phone,
         #cardProducts .prod-input-row .col-name, #cardProducts .prod-input-row .col-qty, #cardProducts .prod-input-row .col-price, #cardProducts .prod-input-row .col-action { max-width: 100%; width: 100%; flex: 1; }
     }
     .table-wrap { display:block; overflow-x:auto; }
+    .conflict-box { background:#fff7f3; border:1px solid #ffd7ca; padding:10px; border-radius:6px; margin-top:8px; }
   </style>
 </head>
 <body>
@@ -119,7 +119,7 @@
       <header>
         <div>
           <h1>OrderGo – Bán Hàng</h1>
-          <div class="notice small muted">Quản lý mã đơn tổng và lưu trữ dữ liệu</div>
+          <div class="notice small muted">Quản lý mã đơn tổng và lưu trữ dữ liệu — đã bổ sung đồng bộ + xử lý xung đột</div>
         </div>
         <div class="controls">
           <select id="selBatches" style="min-width:200px;"></select>
@@ -247,8 +247,8 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
  <script>
-    // === Cấu hình (giữ nguyên GS_URL nếu muốn bật remote) ===
-    const GS_URL = 'https://script.google.com/macros/s/AKfycbwab0rRwfyAOFvDS2QQ_cxm_wL1Ljf4PX7UDAUu-vg6bZ7lpjYihIR_ff1BClhCq1an/exec'; 
+    // === Cấu hình (CẬP NHẬT URL Apps Script ở đây) ===
+    const GS_URL = 'https://script.google.com/macros/s/AKfycbwf8aRE3-NOeRLOEry3swxWrbfnhovP9EFmQ2QTBALd4ciY4maLD23RipBo-_aEgm3b/exec';
     const USE_REMOTE = GS_URL && GS_URL.includes('script.google.com');
 
     // ===== tiện ích cơ bản =====
@@ -265,6 +265,7 @@
     let customers = [];
     let currentBatchId = null;
     let editingOrderIndex = null;
+    let editingOriginal = null; // snapshot before edit (for diff/patch-only detection)
     const LS_KEY = 'ordergo_v5_data';
 
     // ===== persistence local =====
@@ -277,12 +278,11 @@
     function getCurrentBatch(){ return batches.find(b => b.id === currentBatchId); }
     function ensureIcons(){ if(window.feather && typeof feather.replace === 'function'){ try{ feather.replace(); } catch(e){} } else setTimeout(ensureIcons,150); }
 
-    // ========== NEW HELPERS FOR ITEM STRUCTURE (JSON) ==========
+    // ========== ITEM PARSING HELPERS ==========
     function parseItemsFromText(text) {
       if (!text) return [];
       return String(text).split(/\s*;\s*/).map(part => {
         part = part.trim(); if (!part) return null;
-        // match "NAME xNUMBER"
         const m = part.match(/^(.+?)\s*x\s*([0-9]+)$/i);
         if (m) return { name: m[1].trim(), qty: Number(m[2]) };
         const m2 = part.match(/^(.+?)\s+([0-9]+)$/);
@@ -296,7 +296,7 @@
       return items.map(it => `${it.name} x${it.qty}`).join('; ');
     }
 
-    // Ensure each order has items[] array + itemsJSON + itemsText (used before saving)
+    // Ensure each order has items[] array + itemsJSON + itemsText + lastModified/version default
     function ensureOrdersStructured(batchesArr) {
       return (batchesArr || []).map(b => {
         const copy = JSON.parse(JSON.stringify(b));
@@ -314,20 +314,22 @@
               orderCopy.items = parseItemsFromText(orderCopy.items);
             }
           } else if (orderCopy.items == null) {
-            // if itemsText exists -> parse it, else empty
             if (orderCopy.itemsText) orderCopy.items = parseItemsFromText(orderCopy.itemsText);
             else orderCopy.items = [];
           }
           try { orderCopy.itemsJSON = JSON.stringify(orderCopy.items); } catch (e) { orderCopy.itemsJSON = '[]'; }
           orderCopy.itemsText = itemsToText(orderCopy.items);
           orderCopy.total = Number(orderCopy.total || 0);
+          orderCopy.lastModified = orderCopy.lastModified || '';
+          orderCopy.version = Number(orderCopy.version || 0);
+          orderCopy._dirty = false; // local edit flag
           return orderCopy;
         });
         return copy;
       });
     }
 
-    // When loading remote/local raw batches -> normalize orders/items to arrays
+    // Normalize loaded batches from server/local
     function normalizeLoadedBatches(rawBatches) {
       return (rawBatches || []).map(rb => {
         const b = Object.assign({}, rb);
@@ -349,34 +351,35 @@
           } else {
             order.items = order.items || [];
           }
-          // ensure supporting fields
           try { order.itemsJSON = JSON.stringify(order.items); } catch(e){ order.itemsJSON = '[]'; }
           order.itemsText = itemsToText(order.items);
           order.total = Number(order.total || 0);
+          order.lastModified = order.lastModified || '';
+          order.version = Number(order.version || 0);
+          order._dirty = false;
           return order;
         });
         return b;
       });
     }
-    // ===== end helpers =====
 
-    // ===== render UI lists (unchanged but robust to items as string) =====
+    // ===== render UI lists (unchanged but robust) =====
     function renderBatchList(){ const sel = $('selBatches'); sel.innerHTML=''; batches.forEach(b => { const opt = document.createElement('option'); opt.value = b.id; opt.textContent = b.name; if(b.id===currentBatchId) opt.selected = true; sel.appendChild(opt); }); if(batches.length===0){ const opt=document.createElement('option'); opt.value=''; opt.textContent='(Chưa có mã đơn tổng)'; sel.appendChild(opt); } }
     function renderProducts(){ const tb = document.querySelector('#tblProducts tbody'); tb.innerHTML=''; const b = getCurrentBatch(); if(!b){ refreshItemSelectOptions(); return; } b.products.forEach((p, idx) => { const tr = document.createElement('tr'); tr.innerHTML = `<td>${p.name}</td><td>${p.in}</td><td>${p.sold||0}</td><td style="font-weight:600; color:${p.remain <= 0 ? 'var(--danger)' : '#059669'};">${p.remain||0}</td><td style="text-align:right;">${fmtCurrency(p.price)}</td><td><button class="icon-btn" data-action="edit" data-idx="${idx}" title="Edit"><i data-feather="edit-2"></i></button><button class="icon-btn" data-action="delete" data-idx="${idx}" title="Xóa"><i data-feather="trash-2"></i></button></td>`; tb.appendChild(tr); }); refreshItemSelectOptions(); ensureIcons(); }
     function renderOrders(){ const tb = document.querySelector('#tblOrders tbody'); tb.innerHTML=''; const b = getCurrentBatch(); if(!b) return; let grand=0; b.orders.forEach((o, idx) => {
-        // items may be array or string; handle both
         let itemsArr = [];
         if (Array.isArray(o.items)) itemsArr = o.items;
         else if (typeof o.items === 'string') {
-          // try parse JSON, else parse text
           try { itemsArr = JSON.parse(o.items); if(!Array.isArray(itemsArr)) itemsArr = parseItemsFromText(o.items); } catch(e){ itemsArr = parseItemsFromText(o.items); }
         } else if (o.itemsText) {
           itemsArr = parseItemsFromText(o.itemsText);
         }
         const itemsStr = itemsArr.map(it => `${it.name} x${it.qty}`).join('<br/>');
         grand += Number(o.total||0);
+        const unsynced = o._dirty ? `<div class="small" style="color:#b45309">Chưa gửi</div>` : '';
+        const lastMod = o.lastModified ? `<div class="small muted">◆ ${o.lastModified.split('T')[0]} ${o.lastModified.split('T')[1]?.slice(0,8)||''}</div>` : '';
         const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${idx+1}</td><td>${o.customer}</td><td class="wrap-text">${o.address} / ${o.phone}</td><td class="wrap-text">${itemsStr}</td><td class="wrap-text">${(o.note||'')}</td><td style="text-align:right;">${fmtCurrency(o.total)}</td><td><button class="icon-btn" data-action="edit-order" data-idx="${idx}" title="Edit"><i data-feather="edit-2"></i></button><button class="icon-btn" data-action="del-order" data-idx="${idx}" title="Xóa"><i data-feather="trash-2"></i></button></td>`;
+        tr.innerHTML = `<td>${idx+1} ${unsynced}${lastMod}</td><td>${escapeHtml(o.customer)}</td><td class="wrap-text">${escapeHtml(o.address)} / ${escapeHtml(o.phone)}</td><td class="wrap-text">${itemsStr}</td><td class="wrap-text">${escapeHtml(o.note||'')}</td><td style="text-align:right;">${fmtCurrency(o.total)}</td><td><button class="icon-btn" data-action="edit-order" data-idx="${idx}" title="Edit"><i data-feather="edit-2"></i></button><button class="icon-btn" data-action="del-order" data-idx="${idx}" title="Xóa"><i data-feather="trash-2"></i></button></td>`;
         tb.appendChild(tr);
     }); $('grandTotal').textContent = fmtCurrency(grand); ensureIcons(); }
 
@@ -398,6 +401,7 @@
         addItemRow('',1); 
         $('orderTotal').textContent = fmtCurrency(0); 
         editingOrderIndex = null; 
+        editingOriginal = null;
         $('btnAddOrder').textContent = 'Thêm đơn'; 
         $('btnCancelEdit').style.display = 'none';
     }
@@ -407,8 +411,8 @@
     function addProductFromForm(){ const name=$('prodName').value.trim(); if(!name){ alert('Tên hàng không được trống'); return; } const pin=Number($('prodIn').value||0); const price=Number($('prodPrice').value||0); const b=getCurrentBatch(); if(!b){ alert('Chọn hoặc tạo mã đơn tổng trước'); return; } if(b.products.some(p => lcName(p.name) === lcName(name))) { alert(`Sản phẩm "${name}" đã tồn tại.`); return; } b.products.push({ name, in: pin, sold:0, remain: pin, price }); $('prodName').value=''; $('prodIn').value=''; $('prodPrice').value=''; persistAll(); renderProducts(); }
     function addItemToOrder(){ addItemRow('',1); }
 
-    // ===== create/update order: ensure items stored as array + itemsJSON/itemsText =====
-    function addOrUpdateOrderFromForm(){ 
+    // ===== create/update order: detect patch-only vs snapshot-save =========
+    async function addOrUpdateOrderFromForm(){ 
       const b = getCurrentBatch(); if(!b){ alert('Chọn mã đơn tổng trước'); return; }
       const customer = $('orderCustomer').value.trim(); const address = $('orderAddress').value.trim(); const phone = $('orderPhone').value.trim(); const note = $('orderNote').value.trim();
       if(!customer){ alert('Nhập tên khách hàng'); return; }
@@ -417,113 +421,207 @@
       if(items.length===0 && editingOrderIndex === null){ alert('Phải có ít nhất 1 mặt hàng.'); return; }
       const total = updateOrderTotal();
 
-      // build order object with structured items and helper fields
+      const now = new Date().toISOString();
+
+      // Build new order object (structured)
       const newOrder = {
-        id: uid('order'),
+        id: editingOrderIndex === null ? uid('order') : (getCurrentBatch().orders[editingOrderIndex] && getCurrentBatch().orders[editingOrderIndex].id) || uid('order'),
         customer,
         address,
         phone,
         note,
-        items: JSON.parse(JSON.stringify(items)), // ensure copy
+        items: JSON.parse(JSON.stringify(items)),
         itemsJSON: JSON.stringify(items),
         itemsText: itemsToText(items),
         total: Number(total) || 0,
-        created: new Date().toISOString()
+        created: editingOrderIndex === null ? now : (getCurrentBatch().orders[editingOrderIndex].created || now),
+        lastModified: now,
+        version: editingOrderIndex === null ? 0 : (getCurrentBatch().orders[editingOrderIndex].version || 0)
       };
 
-      // update sold counts when editing: reverse old sold, then add new
-      if (editingOrderIndex !== null) {
-        const oldOrder = b.orders[editingOrderIndex];
+      // determine if this edit is only status/shippingNote change -> we could use patchOrder
+      // But original form edits full order; we will choose to use patchOrder only if the only differences between editingOriginal and newOrder are 'note' and 'total' is same? Simpler rule:
+      // If editingExisting && items/customer/address/phone changed -> perform saveAll (snapshot)
+      // If editingExisting && only note changed or only total (rare) -> attempt patchOrder (status-based). As form doesn't have 'status' select, prefer saveAll on full edits.
+      const bref = b;
+      if(editingOrderIndex !== null){
+        // update existing
+        const old = editingOriginal || bref.orders[editingOrderIndex];
+        // detect whether only 'note' changed and items are identical -> try patchOrder updating shippingNote (server expects shippingNote)
+        const itemsEqual = JSON.stringify(old.items || []) === JSON.stringify(newOrder.items || []);
+        const basicEqual = (lcName(old.customer||'') === lcName(newOrder.customer||'')) && (String(old.address||'') === String(newOrder.address||'')) && (String(old.phone||'') === String(newOrder.phone||'')) && itemsEqual;
+        if(basicEqual){
+          // Only metadata changed (note/total?), perform a patchOrder that updates shippingNote and maybe order (stt)
+          // Prepare update (server supports status, shippingNote, order)
+          const updatePayload = {
+            id: newOrder.id,
+            stt: (editingOrderIndex + 1),
+            // shippingNote field on server corresponds to our 'note'
+            shippingNote: newOrder.note || '',
+            clientLastModified: old.lastModified || ''
+          };
+          // mark local as dirty (until server confirms)
+          bref.orders[editingOrderIndex] = Object.assign({}, bref.orders[editingOrderIndex], newOrder, { _dirty: true });
+          renderOrders();
+          // send patch
+          await sendPatchOrder(bref.id, updatePayload, editingOrderIndex);
+          return;
+        }
+      }
+
+      // Otherwise (new order or full edit) -> apply locally and save snapshot (saveAll)
+      if(editingOrderIndex !== null){
+        // reverse sold counts from old
+        const oldOrder = bref.orders[editingOrderIndex];
         if (oldOrder && Array.isArray(oldOrder.items)) {
           oldOrder.items.forEach(it => {
-            const p = b.products.find(prod => prod.name === it.name);
+            const p = bref.products.find(prod => prod.name === it.name);
             if (p) { p.sold = Math.max(0, (p.sold || 0) - it.qty); }
           });
         }
-        b.orders.splice(editingOrderIndex, 1, newOrder);
+        // replace
+        bref.orders.splice(editingOrderIndex, 1, newOrder);
       } else {
-        b.orders.push(newOrder);
+        // push new
+        bref.orders.push(newOrder);
       }
-
-      // adjust product sold counts based on new items
+      // update sold counts based on new items
       newOrder.items.forEach(it => {
-        const p = b.products.find(pp => lcName(pp.name) === lcName(it.name));
+        const p = bref.products.find(pp => lcName(pp.name) === lcName(it.name));
         if (p) { p.sold = (p.sold || 0) + Number(it.qty); }
       });
-      b.products.forEach(p => { p.remain = (p.in || 0) - (p.sold || 0); });
+      bref.products.forEach(p => { p.remain = (p.in || 0) - (p.sold || 0); });
 
       // update customers list
       const custIdx = customers.findIndex(c => lcName(c.name) === lcName(customer));
       if(custIdx === -1){ customers.unshift({ name: customer, address, phone }); } else { customers[custIdx].address = address; customers[custIdx].phone = phone; }
 
+      // persist local and send saveAll (snapshot) to server
       resetOrderForm(); persistAll(); renderAll();
+
+      if(USE_REMOTE){
+        showLoading('Đang lưu snapshot lên server...');
+        try{
+          const ok = await gsSaveAll(); // gsSaveAll will send full structured payload
+          if(ok){
+            // On success, reload remote data to get server lastModified/version values
+            await gsLoadAll();
+            alert('Lưu và đồng bộ thành công.');
+          } else {
+            alert('Lưu lên server thất bại — dữ liệu đã lưu local.');
+          }
+        } finally { hideLoading(); }
+      } else {
+        alert('Đã lưu local (offline). Bật USE_REMOTE để push lên server.');
+      }
     }
 
-    // ===== product edit: keep name sync across orders =====
-    function updateProductNameInOrders(oldName, newName) {
-        const b = getCurrentBatch();
-        if (!b || !oldName || !newName || oldName === newName) return;
-        b.orders.forEach(order => {
-            if (Array.isArray(order.items)) {
-                order.items.forEach(item => { if (item.name === oldName) item.name = newName; });
+    // ===== patchOrder helper =====
+    async function sendPatchOrder(batchId, updatePayload, localIndex=null){
+      // updatePayload: { id, stt, status?, shippingNote?, clientLastModified?, force? }
+      try{
+        const body = { action:'patchOrder', batchId: batchId, update: updatePayload };
+        const resp = await fetch(GS_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+        const j = await resp.json();
+        if(j && j.ok){
+          // server returned j.res (update result) optionally containing lastModified/version
+          const resObj = j.res || {};
+          if(localIndex !== null){
+            const b = batches.find(bb => bb.id === batchId);
+            if(b && b.orders[localIndex]){
+              b.orders[localIndex]._dirty = false;
+              // update lastModified/version if server returned them (our server sets these when applying patch)
+              b.orders[localIndex].lastModified = resObj.lastModified || resObj.lastModified || new Date().toISOString();
+              b.orders[localIndex].version = resObj.version || (Number(b.orders[localIndex].version||0) + 1);
             }
-            // update itemsText & itemsJSON
-            order.itemsText = itemsToText(order.items);
-            try { order.itemsJSON = JSON.stringify(order.items); } catch(e){ order.itemsJSON = '[]'; }
-        });
-    }
-
-    function recalculateAllOrderTotals() {
-        const b = getCurrentBatch();
-        if (!b) return;
-        b.orders.forEach(order => {
-            let newTotal = 0;
-            if (Array.isArray(order.items)) {
-                order.items.forEach(item => {
-                    const product = b.products.find(p => p.name === item.name);
-                    if (product) newTotal += (Number(product.price) || 0) * (Number(item.qty) || 0);
-                });
+            persistAll(); renderOrders();
+          } else {
+            // no local index provided -> reload to be safe
+            await gsLoadAll();
+          }
+          return true;
+        } else {
+          // conflict handling: server might return { ok:false, conflict: <server snapshot> }
+          if(j && j.conflict){
+            // j.conflict is server snapshot
+            const b = batches.find(bb => bb.id === batchId);
+            if(b && localIndex!==null){
+              handleConflict_UI(j.conflict, b, localIndex, updatePayload);
+            } else {
+              // reload so user can see differences
+              await gsLoadAll();
+              alert('Conflict detected on server. Đã nạp lại dữ liệu server để bạn kiểm tra.');
             }
-            order.total = Number(newTotal || 0);
-        });
+            return false;
+          } else {
+            alert('Lỗi server khi patch: ' + (j && (j.error || JSON.stringify(j)) || 'unknown'));
+            return false;
+          }
+        }
+      } catch(err){
+        console.error('sendPatchOrder err', err);
+        alert('Lỗi kết nối khi gửi cập nhật: ' + err);
+        return false;
+      }
     }
 
-    function editProduct(index) {
-        const b = getCurrentBatch(); if (!b) return; const p = b.products[index]; if (!p) return;
-        const oldName = p.name;
-        const newName = prompt('Tên hàng', p.name);
-        if (newName === null) return;
-        const newIn = prompt('Nhập', p.in);
-        if (newIn === null) return;
-        const newPrice = prompt('Giá bán', p.price);
-        if (newPrice === null) return;
-        p.name = newName.trim(); p.in = Number(newIn) || 0; p.price = Number(newPrice) || 0; p.remain = p.in - (p.sold || 0);
-        if (oldName !== p.name) updateProductNameInOrders(oldName, p.name);
-        recalculateAllOrderTotals();
+    // ===== conflict UI handler =====
+    function handleConflict_UI(serverSnapshot, batch, orderIndex, attemptedUpdate){
+      // show a conflict box near top of page (simple UI)
+      const targetCard = document.querySelector('#cardOrders .card') || document.querySelector('#cardOrders');
+      const msgBox = document.createElement('div');
+      msgBox.className = 'conflict-box';
+      msgBox.innerHTML = `
+        <strong>Xung đột dữ liệu</strong>
+        <div class="small muted">Đơn đã được thay đổi trên server lúc: ${serverSnapshot.lastModified || '-'}</div>
+        <div style="margin-top:8px;"><strong>Server:</strong><pre style="white-space:pre-wrap; max-height:160px; overflow:auto">${escapeHtml(JSON.stringify(serverSnapshot, null, 2))}</pre></div>
+        <div style="margin-top:8px;"><strong>Local (bạn gửi):</strong><pre style="white-space:pre-wrap; max-height:160px; overflow:auto">${escapeHtml(JSON.stringify(attemptedUpdate, null, 2))}</pre></div>
+        <div style="margin-top:8px; display:flex; gap:8px; justify-content:flex-end;">
+          <button id="conf_keep_server" class="btn secondary small">Giữ Server</button>
+          <button id="conf_force" class="btn small">Ghi đè (Force)</button>
+        </div>
+      `;
+      // attach to top of orders card
+      const ordersCard = document.querySelector('#cardOrders');
+      // clear existing conflict boxes
+      const existing = ordersCard.querySelectorAll('.conflict-box');
+      existing.forEach(n => n.remove());
+      ordersCard.insertBefore(msgBox, ordersCard.firstChild);
+
+      document.getElementById('conf_keep_server').onclick = async () => {
+        // Pull server snapshot into local order
+        batch.orders[orderIndex] = Object.assign({}, batch.orders[orderIndex], serverSnapshot, { _dirty:false });
         persistAll(); renderAll();
+        alert('Đã cập nhật local theo server.');
+        msgBox.remove();
+      };
+      document.getElementById('conf_force').onclick = async () => {
+        // send patch with force:true
+        const update = Object.assign({}, attemptedUpdate, { force: true });
+        const ok = await sendPatchOrder(batch.id, update, orderIndex);
+        if(ok){
+          alert('Ghi đè thành công.');
+          await gsLoadAll();
+          msgBox.remove();
+        } else {
+          alert('Ghi đè không thành công.');
+        }
+      };
     }
-
-    // ===== delete batch & orders (maintain sold counts) =====
-    function deleteBatch(id){ if(!id) return; const bidx = batches.findIndex(b=>b.id===id); if(bidx===-1) return; if(!confirm('Xóa mã này? Hành động không thể hoàn tác.')) return; batches.splice(bidx,1); currentBatchId = batches[0] ? batches[0].id : null; persistAll(); renderAll(); }
 
     // ====== Remote save/load ======
     async function gsSaveAll(){ 
       if(!USE_REMOTE) {
-        // Save localNormalized for safety
         batches = normalizeLoadedBatches(batches);
         persistAll();
         return false;
       }
       try{
-        // Ensure we send structured items + itemsJSON/itemsText
         const payloadObj = { batches: ensureOrdersStructured(batches), customers, currentBatchId };
-        const params = new URLSearchParams();
-        params.append('action','saveAll');
-        params.append('data', JSON.stringify({ data: payloadObj }));
-        const resp = await fetch(GS_URL, { method:'POST', body: params });
-        const text = await resp.text();
-        let j = {};
-        try{ j = JSON.parse(text); } catch(e){ j = { ok:false, raw:text }; }
+        // Use JSON body (server handles both styles)
+        const body = { action: 'saveAll', data: payloadObj };
+        const resp = await fetch(GS_URL, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(body) });
+        const j = await resp.json();
         if(j && j.ok){ return true; } else { console.warn('gsSaveAll server error', j); alert('Lưu lên Google Sheets thất bại: ' + (j && j.error ? j.error : JSON.stringify(j))); return false; }
       } catch(err){
         console.error('gsSaveAll error', err);
@@ -535,19 +633,17 @@
     async function gsLoadAll(){ 
       if (!USE_REMOTE) return false;
       try {
-        const params = new URLSearchParams();
-        params.append('action', 'readAll');
-        const resp = await fetch(GS_URL, { method: 'POST', body: params });
-        const text = await resp.text();
-        let j = {};
-        try { j = JSON.parse(text); } catch (e) { console.error('gsLoadAll parse error', e); return false; }
+        const body = { action: 'readAll' };
+        const resp = await fetch(GS_URL, { method: 'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(body) });
+        const j = await resp.json();
         if (j && j.ok && j.data) {
-          // normalize loaded batches -> orders[].items guaranteed array
           const remoteBatchesRaw = (j.data.batches || []);
           const remoteBatches = normalizeLoadedBatches(remoteBatchesRaw);
-          batches = remoteBatches.map(rb => ({ id: rb.id || rb.name || uid('batch'), name: rb.name, products: rb.products || [], orders: rb.orders || [], timestamp: rb.timestamp }));
+          // map to local structure, preserve ids/names
+          batches = remoteBatches.map(rb => ({ id: rb.id || rb.name || uid('batch'), name: rb.name || rb.id, products: rb.products || [], orders: rb.orders || [], timestamp: rb.timestamp }));
           currentBatchId = j.data.currentBatchId || (batches[0] && batches[0].id) || currentBatchId;
           persistAll();
+          renderAll();
           return true;
         }
         return false;
@@ -559,28 +655,25 @@
 
     async function loadCustomersFromGS() { 
       if (!USE_REMOTE) { alert('Lỗi: URL Apps Script chưa được cấu hình.'); return false; }
-      try { showLoading('Đang tải khách hàng...'); const params = new URLSearchParams(); params.append('action', 'readAll'); const resp = await fetch(GS_URL, { method: 'POST', body: params }); const text = await resp.text(); let j = {}; try { j = JSON.parse(text); } catch (e) { console.error("Invalid JSON response.", text); throw new Error("Phản hồi từ Google Sheet không phải JSON."); } if (j && j.ok && j.data) { const remoteCust = j.data.customers || []; const map = {}; remoteCust.forEach(c => { const key = lcName(c.name); map[key] = { name: c.name, address: c.address || '', phone: c.phone || '' }; }); customers.forEach(c => { const key = lcName(c.name); if (!map[key]) { map[key] = c; } else { if (!map[key].address && c.address) map[key].address = c.address; if (!map[key].phone && c.phone) map[key].phone = c.phone; } }); customers = Object.values(map); alert(`Đã tải và hợp nhất ${remoteCust.length} khách hàng.`); const remoteBatches = j.data.batches || []; if (remoteBatches.length) { batches = normalizeLoadedBatches(remoteBatches); currentBatchId = j.data.currentBatchId || (batches[0] && batches[0].id) || currentBatchId; } persistAll(); renderAll(); return true; } else { alert('Lỗi: Server Google Sheet trả về dữ liệu không hợp lệ.'); return false; } } catch (err) { alert('Lỗi khi tải từ Google Sheets: ' + err.message); return false; } finally { hideLoading(); } }
+      try { showLoading('Đang tải khách hàng...'); const body = { action:'readAll' }; const resp = await fetch(GS_URL, { method: 'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(body) }); const j = await resp.json(); if (j && j.ok && j.data) { const remoteCust = j.data.customers || []; const map = {}; remoteCust.forEach(c => { const key = lcName(c.name); map[key] = { name: c.name, address: c.address || '', phone: c.phone || '' }; }); customers.forEach(c => { const key = lcName(c.name); if (!map[key]) { map[key] = c; } else { if (!map[key].address && c.address) map[key].address = c.address; if (!map[key].phone && c.phone) map[key].phone = c.phone; } }); customers = Object.values(map); alert(`Đã tải và hợp nhất ${remoteCust.length} khách hàng.`); const remoteBatches = j.data.batches || []; if (remoteBatches.length) { batches = normalizeLoadedBatches(remoteBatches); currentBatchId = j.data.currentBatchId || (batches[0] && batches[0].id) || currentBatchId; } persistAll(); renderAll(); return true; } else { alert('Lỗi: Server Google Sheet trả về dữ liệu không hợp lệ.'); return false; } } catch (err) { alert('Lỗi khi tải từ Google Sheets: ' + err.message); return false; } finally { hideLoading(); } }
 
     function deleteLocalCustomers() { if (customers.length === 0) { alert('Danh sách khách hàng local đã trống.'); return; } if (confirm(`Xóa toàn bộ ${customers.length} khách hàng trong trình duyệt?`)) { customers = []; persistAll(); renderAll(); alert('Đã xóa. Bấm "Lưu" để đồng bộ lên Google Sheets.'); } }
 
     function handleUploadCustomers(file){ const reader = new FileReader(); reader.onload = function(e){ const data = e.target.result; let workbook = null; try{ workbook = XLSX.read(data, {type:'binary'}); } catch(ex){ try{ workbook = XLSX.read(data, {type:'string'}); } catch(e2){ alert('Không đọc được file'); return; } } const firstSheetName = workbook.SheetNames[0]; const ws = workbook.Sheets[firstSheetName]; const arr = XLSX.utils.sheet_to_json(ws, { header:1 }); let added=0, updated=0; arr.slice(1).forEach(r => { const name = (r[0] || '').toString().trim(); const addr = (r[1] || '').toString().trim(); const phone = (r[2] || '').toString().trim(); if(!name) return; const key = lcName(name); const idx = customers.findIndex(c => lcName(c.name) === key); if(idx === -1){ customers.unshift({ name, address: addr, phone }); added++; } else { customers[idx].address = addr; customers[idx].phone = phone; updated++; } }); persistAll(); renderCustomersPanel(); updateCustomersDatalist(); alert(`Import hoàn tất. Thêm: ${added}, Cập nhật: ${updated}`); }; reader.readAsBinaryString(file); }
 
-    // ====== Export Excel: ensure reads items as arrays (compatible with old string format) ======
+    // ====== Export Excel (keeps same behaviour) ======
     function exportExcel() { 
       if (typeof XLSX === 'undefined') { alert('Lỗi: Thư viện xuất Excel chưa được tải.'); return; }
       try {
         const currentB = getCurrentBatch();
         if (!currentB) { alert('Chưa chọn batch để xuất.'); return; }
         const wb = XLSX.utils.book_new();
-        // Products sheet
         const prodRows = [['Tên hàng', 'Nhập', 'Đã bán', 'Tồn', 'Giá bán']].concat((currentB.products || []).map(p => [p.name, p.in, p.sold, p.remain, p.price]));
         const wsP = XLSX.utils.aoa_to_sheet(prodRows);
         XLSX.utils.book_append_sheet(wb, wsP, 'Products_' + sanitizeForSheetName(currentB.name));
-        // Orders sheet - headers include product columns
         const allProductNames = (currentB.products || []).map(p => p.name);
         const orderHeaders = ['STT', 'Tổng tiền', 'Khách hàng', 'Địa chỉ', 'Số điện thoại', 'Ghi chú'].concat(allProductNames);
         const orderRows = (currentB.orders || []).map((o, index) => {
-            // ensure itemsArr
             let itemsArr = [];
             if (Array.isArray(o.items)) itemsArr = o.items;
             else if (typeof o.items === 'string') { try { const parsed = JSON.parse(o.items); if (Array.isArray(parsed)) itemsArr = parsed; else itemsArr = parseItemsFromText(o.items); } catch(e){ itemsArr = parseItemsFromText(o.items); } }
@@ -591,7 +684,6 @@
             allProductNames.forEach(prodName => row.push(itemMap.get(prodName) || ''));
             return row;
         });
-        // Totals row
         let totalOfTotals = 0; const productTotals = {}; allProductNames.forEach(pn => productTotals[pn] = 0);
         (currentB.orders || []).forEach(o => {
             totalOfTotals += Number(o.total || 0);
@@ -646,6 +738,7 @@
         const o = b.orders[index]; 
         if (!o) return;
         editingOrderIndex = index;
+        editingOriginal = JSON.parse(JSON.stringify(o)); // snapshot before edit
         $('orderCustomer').value = o.customer || '';
         $('orderAddress').value = o.address || '';
         $('orderPhone').value = o.phone || '';
@@ -666,7 +759,6 @@
     async function initApp() {
         showLoading();
         loadLocal();
-        // normalize local data (in case items were saved as strings earlier)
         batches = normalizeLoadedBatches(batches);
         if (USE_REMOTE) { await gsLoadAll(); }
         if (!batches.length) { const id = uid('batch'); batches.push({ id, name: new Date().toISOString().slice(0, 10).replace(/-/g, ''), products: [], orders: [] }); currentBatchId = id; persistAll(); } else if (!currentBatchId || !batches.find(b => b.id === currentBatchId)) { currentBatchId = batches[0].id; persistAll(); }
